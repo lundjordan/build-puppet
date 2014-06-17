@@ -14,12 +14,6 @@ class slaveapi::base {
     include packages::openipmi
     include packages::snmp
 
-    # XXX let's put the aws_manager stuff here first then extract it out
-    include packages::mercurial
-    $root = $::config::aws_manager_root
-    $cloud_tools_dst = "${root}/cloud-tools"
-    $secrets_dir = "${root}/secrets"
-
     include nrpe::check::procs_regex
 
     $compiler_req = Class['packages::gcc']

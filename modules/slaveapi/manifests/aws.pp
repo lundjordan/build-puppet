@@ -1,11 +1,13 @@
-class slaveapi::aws {
+class slaveapi::aws ($slaveapi_title='prod') {
     include ::config
+    include users::builder
 
     # use the slaveapi user - cltbld instead of buildduty
     $user = $users::builder::username
     $group = $users::builder::group
     $home = $users::builder::home
 
+    $basedir = "${slaveapi::base::root}/${slaveapi_title}"
     $aws_dst = "${basedir}/aws"
     $cloud_tools_dst = "${aws_dst}/aws/cloud-tools"
     $secrets_dst = "${aws_dst}/aws/secrets"
@@ -20,19 +22,10 @@ class slaveapi::aws {
             group => $group;
         "${secrets_dst}":
             ensure => directory,
-            mode => 0755,
+            mode => 0700,
             owner => $user,
             group => $group,
             require => File[$aws_dst];
-        "${secrets_dst}/cached_certs":
-            ensure  => directory,
-            mode    => 0700,
-            owner   => $user,
-            group   => $group,
-            require => [
-                Python::Virtualenv[$basedir],
-                File[$secrets_dst]
-            ];
         "${home}/.boto":
             mode      => 0600,
             owner     => $user,
@@ -51,21 +44,16 @@ class slaveapi::aws {
     mercurial::repo {
         "cloud-tools-${cloud_tools_dst}":
             hg_repo => "${config::cloud_tools_hg_repo}",
-            dst_dir => cloud_tools_dst,
+            dst_dir => $cloud_tools_dst,
             user    => $user,
-            branch  => "${config::cloud_tools_hg_branch}"
-            require => [
-                Python::Virtualenv[$basedir],
-                File[$aws_dst],
-            ],
+            branch  => "${config::cloud_tools_hg_branch}",
+            require => Python::Virtualenv[$basedir];
     }
 
     # cron tasks
     file {
-        "/etc/cron.d/aws-manager-update-hg-clone":
+        "/etc/cron.d/slaveapi-update-hg-cloud-tools":
             content => "*/5 * * * * ${user} cd ${cloud_tools_dst} && ${packages::mozilla::py27_mercurial::mercurial} pull -u\n";
-        "/etc/cron.d/aws-manager-delete-old-certs":
-            content => "@daily find ${secrets_dst}/cached_certs -type f -mtime +30 -delete\n";
     }
 }
 

@@ -13,6 +13,10 @@ define slaveapi::instance($listenaddr, $port, $version="1.1.2") {
     if (has_aspect("dev")) {
         $bugzilla_url = $::config::slaveapi_bugzilla_dev_url
         # let's test the aws_manager stuff on dev first
+        class {
+            "slaveapi::aws":
+                slaveapi_title => $title,
+        }
         include slaveapi::aws
     }
     else {
@@ -62,7 +66,6 @@ define slaveapi::instance($listenaddr, $port, $version="1.1.2") {
                 "slaveapi==${version}",
                 "mozpoolclient==0.1.5",
                 "python-dateutil==1.5",
-
                 # for creating aws instances
                 "Fabric==1.8.0",
                 "IPy==0.81",
