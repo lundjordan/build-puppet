@@ -17,7 +17,6 @@ define slaveapi::instance($listenaddr, $port, $version="1.1.2") {
             "slaveapi::aws":
                 slaveapi_title => $title,
         }
-        include slaveapi::aws
     }
     else {
         $bugzilla_url = $::config::slaveapi_bugzilla_prod_url
