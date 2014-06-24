@@ -9,9 +9,9 @@ class slaveapi::aws ($slaveapi_title='prod') {
 
     $basedir = "${slaveapi::base::root}/${slaveapi_title}"
     $aws_dst = "${basedir}/aws"
-    $cloud_tools_dst = "${aws_dst}/aws/cloud-tools"
-    $secrets_dst = "${aws_dst}/aws/secrets"
-    $aws_bin_dst = "${aws_dst}/aws/bin"
+    $cloud_tools_dst = "${aws_dst}/cloud-tools"
+    $secrets_dst = "${aws_dst}/secrets"
+    $aws_bin_dst = "${aws_dst}/bin"
 
     # initial file setup
     file {
