@@ -10,6 +10,7 @@ class slaveapi::aws ($slaveapi_title='prod') {
     $basedir = "${slaveapi::base::root}/${slaveapi_title}"
     $aws_dst = "${basedir}/aws"
     $cloud_tools_dst = "${aws_dst}/cloud-tools"
+    $secrets_dst = "${aws_dst}/secrets"
 
     # initial file setup
     file {
@@ -18,6 +19,18 @@ class slaveapi::aws ($slaveapi_title='prod') {
             mode    => 0755,
             owner => $user,
             group => $group;
+        "${secrets_dst}":
+            ensure => directory,
+            mode => 0700,
+            owner => $user,
+            group => $group,
+            require => File[$aws_dst];
+        "${secrets_dst}/aws-secrets.json":
+            mode      => 0600,
+            owner     => $user,
+            group     => $group,
+            show_diff => false,
+            content   => template("$module_name/aws-secrets.json.erb");
         "${home}/.boto":
             mode      => 0600,
             owner     => $user,
