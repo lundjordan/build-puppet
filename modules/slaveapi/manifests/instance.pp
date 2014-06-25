@@ -7,16 +7,17 @@ define slaveapi::instance($listenaddr, $port, $version="1.1.2") {
     include slaveapi::base
     include users::builder
 
+    # give slaveapi aws powers
+    class {
+        "slaveapi::aws":
+            slaveapi_title => $title,
+    }
+
     $basedir = "${slaveapi::base::root}/${title}"
     $credentials_file = "${basedir}/credentials.json"
     $config_file = "${basedir}/slaveapi.ini"
     if (has_aspect("dev")) {
         $bugzilla_url = $::config::slaveapi_bugzilla_dev_url
-        # let's test the aws_manager stuff on dev first
-        class {
-            "slaveapi::aws":
-                slaveapi_title => $title,
-        }
     }
     else {
         $bugzilla_url = $::config::slaveapi_bugzilla_prod_url
