@@ -1,4 +1,4 @@
-class slaveapi::aws ($slaveapi_title='prod') {
+class slaveapi::aws ($environment='prod') {
     include ::config
     include users::builder
 
@@ -7,7 +7,7 @@ class slaveapi::aws ($slaveapi_title='prod') {
     $group = $users::builder::group
     $home = $users::builder::home
 
-    $basedir = "${slaveapi::base::root}/${slaveapi_title}"
+    $basedir = "${slaveapi::base::root}/${environment}"
     $aws_dst = "${basedir}/aws"
     $cloud_tools_dst = "${aws_dst}/cloud-tools"
     $secrets_dst = "${aws_dst}/secrets"

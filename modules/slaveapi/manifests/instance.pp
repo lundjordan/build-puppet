@@ -10,7 +10,7 @@ define slaveapi::instance($listenaddr, $port, $version="1.1.2") {
     # give slaveapi aws powers
     class {
         "slaveapi::aws":
-            slaveapi_title => $title,
+            environment => $title,
     }
 
     $basedir = "${slaveapi::base::root}/${title}"
