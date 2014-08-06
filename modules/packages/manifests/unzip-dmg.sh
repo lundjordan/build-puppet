@@ -28,11 +28,11 @@ tar -zxvf $TAR
 # compile source
 cd $PACKAGE_SHORTNAME
 cp unix/Makefile .
-mkdir -p $ROOT/usr/local
+mkdir -p $ROOT/usr/
 make generic
 
 # install
-make prefix=$ROOT/usr/local install
+make prefix=$ROOT/usr/ install
 cd ..
 
 # Make package
