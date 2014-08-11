@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# NOTE: you must make/compile this on 10.6 in order for this to work on 10.6+
+
 BUILD=$PWD/build
 ROOT=$BUILD/installroot
 OUT=dmg

@@ -9,6 +9,12 @@ class packages::unzip {
                     ensure => latest;
             }
         }
+        Ubuntu: {
+            package {
+                "unzip":
+                    ensure => '6.0';
+            }
+        }
         Darwin: {
             packages::pkgdmg {
                 'unzip':
