@@ -12,7 +12,7 @@ class packages::unzip {
         Ubuntu: {
             package {
                 "unzip":
-                    ensure => '6.0';
+                    ensure => '6.0-4ubuntu1';
             }
         }
         Darwin: {
