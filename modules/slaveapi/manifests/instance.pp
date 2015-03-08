@@ -75,6 +75,10 @@ define slaveapi::instance($listenaddr, $port, $version="1.2.0") {
                 "repoze.lru==0.6",
                 "ssh==1.8.0",
                 "wsgiref==0.1.2",
+                "cloudtools",
+                "cloudtools.aws",
+                "cloudtools.fabric",
+                "cloudtools.scripts",
             ];
     }
 
