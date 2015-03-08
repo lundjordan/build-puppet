@@ -9,7 +9,8 @@ define signingserver::instance(
         $mar_key_name, $jar_key_name,
         $b2g_key0, $b2g_key1, $b2g_key2,
         $formats, $mac_cert_subject_ou,
-        $signcode_timestamp="yes") {
+        $signcode_timestamp="yes",
+        $concurrency=4) {
     include config
     include signingserver::base
     include users::signer
@@ -39,6 +40,7 @@ define signingserver::instance(
     $mar_keydir = "${secrets_dir}/mar"
     $jar_keystore = "${secrets_dir}/jar"
     $server_certdir = "${secrets_dir}/server"
+    $emevoucher_key = "${secrets_dir}/emevouch.pem"
 
     $dmg_keydir = "${secrets_dir}/dmg"
     $dmg_keychain = "${dmg_keydir}/signing.keychain"
@@ -49,6 +51,8 @@ define signingserver::instance(
     $signmar = "/tools/signmar/bin/signmar"
     $testfile_dir = "/tools/signing-test-files"
     $testfile_signcode = "${testfile_dir}/test.exe"
+    $testfile_osslsigncode = "${testfile_dir}/test64.exe"
+    $testfile_emevoucher = "${testfile_dir}/test.bin"
     $testfile_mar = "${testfile_dir}/test.mar"
     $testfile_gpg = "${testfile_dir}/test.mar"
     $testfile_dmg = "${testfile_dir}/test.tar.gz"
@@ -61,7 +65,6 @@ define signingserver::instance(
 
     # copy vars from config
     $tools_repo = $config::signing_tools_repo
-    $redis = $config::signing_redis_host
     $mac_id = $config::signing_mac_id
     $allowed_ips = $config::signing_allowed_ips
     $new_token_allowed_ips = $config::signing_new_token_allowed_ips
@@ -71,9 +74,6 @@ define signingserver::instance(
 
     if ($mac_id == '') {
         fail("config::signing_mac_id is not set")
-    }
-    if ($redis == '') {
-        fail("config::signing_redis_host is not set")
     }
 
     # OS X does not yet support firewall manipulation

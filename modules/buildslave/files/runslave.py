@@ -241,7 +241,6 @@ class NSCANotifier(object):
 
     # map by datacenter (from DNS); default is None
     monitoring_hosts = {
-        'scl1': 'admin1.infra.scl1.mozilla.com',
         'sjc1': 'bm-admin01.mozilla.org',
         'mtv1': 'bm-admin01.mozilla.org',
         None: 'bm-admin01.mozilla.org',
@@ -473,7 +472,11 @@ def main():
 
     # convert twistd_cmd into an args tuple
     if options.twistd_cmd:
-        options.twistd_cmd = [ options.twistd_cmd ]
+        if sys.platform == 'win32':
+            # on Windows, twistd is a .py file, so run it with the current Python
+            options.twistd_cmd = [ sys.executable, options.twistd_cmd ]
+        else:
+            options.twistd_cmd = [ options.twistd_cmd ]
     else:
         options.twistd_cmd = guess_twistd_cmd()
 

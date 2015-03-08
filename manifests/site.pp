@@ -14,6 +14,7 @@ case $::operatingsystem {
             owner => root,
             backup => false,
             mode => filemode(0644),
+            source_permissions => ignore,
         }
     }
     default: {
@@ -34,18 +35,17 @@ Concat::Fragment {
     backup => false
 }
 
-# the default value for allow_virtual will change to true in Puppet-4.0.0, so be explicit
-Package {
-    allow_virtual => false
-}
-
 # purge unknown users from the system's user database.  This doesn't work on Windows
 # due to https://projects.puppetlabs.com/issues/22048
 # TODO-WIN: figre out how to not purge system users on windows (solve the puppetlabs bug)
 if ($::operatingsystem != "windows") {
     resources {
         'user':
-            purge => true;
+            purge => true,
+            # default for this is 500, but puppet assumes uids <= unless_system_user are system
+            # users, meaning that 500 is considered a system user.  This is not what we want!
+            # see https://tickets.puppetlabs.com/browse/PUP-3160
+            unless_system_user => 499;
     }
 }
 

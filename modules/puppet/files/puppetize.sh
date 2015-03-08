@@ -7,7 +7,6 @@
 # You can set PUPPET_SERVER before running this script to use a server other
 # than 'puppet'
 
-REBOOT_FLAG_FILE="/REBOOT_AFTER_PUPPET"
 OS=`facter operatingsystem`
 case "$OS" in
     Darwin) ROOT=/var/root ;;
@@ -118,11 +117,23 @@ if ! [ -e private_keys/$FQDN.pem -a -e certs/$FQDN.pem -a -e certs/ca.pem ]; the
     hang "Got incorrect certificates (!?)"
 fi
 
+cd /
+
 if ! $interactive; then
     if test -f $ROOT/deploypass; then
         echo "securely removing deploypass"
         case "$OS" in
-            CentOS|Ubuntu)
+            CentOS)
+                shred -u -n 7 -z $ROOT/deploypass || hang
+                # kernel command line is helpfully logged here!
+                for ANACONDA_LOG in /var/log/anaconda.{log,syslog}; do
+                    if [ -f $ANACONDA_LOG ]; then
+                        shred -u -n 7 -z $ANACONDA_LOG || hang
+                    fi
+                done
+                ;;
+
+            Ubuntu)
                 shred -u -n 7 -z $ROOT/deploypass || hang
                 ;;
             Darwin)
@@ -136,8 +147,6 @@ if $interactive; then
     echo "Certificates are ready; run puppet now."
     exit 0
 fi
-
-rm -f "$REBOOT_FLAG_FILE"
 
 run_puppet() {
     puppet_server="${PUPPET_SERVER:-puppet}"
@@ -199,9 +208,9 @@ if [ -f "$ROOT/post-puppetize-hook.sh" ]; then
     . "$ROOT/post-puppetize-hook.sh"
 fi
 
-if [ -f "$REBOOT_FLAG_FILE" ]; then
-    rm -f "$REBOOT_FLAG_FILE"
-    echo "Rebooting as requested"
-    sleep 10
-    reboot
-fi
+# Mandatory reboot after non-interactive puppetizing
+# use post-puppetize-hook.sh with 'exit 0' to prevent this
+echo "Rebooting now"
+sleep 10
+reboot
+

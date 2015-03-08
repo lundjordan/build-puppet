@@ -5,24 +5,36 @@
 
 set -e
 
-if ! test -f py27_mercurial.spec; then
-    echo "Run this from the root of the unpacked SRPM (it uses the sources)"
-    exit 1
-fi
-
-export PATH=`xcode-select -print-path`:/tools/packagemaker/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-
 # variables to parallel the spec file
 realname=mercurial
 pyrealname=python27
 pyver=2.7
 pyhome=/tools/$pyrealname
 python_sitelib=$pyhome/lib/python$pyver/site-packages
-_prefix=/tools/${pyrealname}_${realname}
+_prefix=/tools/${pyrealname}-${realname}
 _libdir=$_prefix/lib
 package_sitelib=$_libdir/python$pyver/site-packages
-version=2.5.4
-release=2
+version=3.2.1
+release=1
+srpm_release=1
+
+# ensure the same build environment (you can change this if necessary, just test carefully)
+
+case "$(sw_vers -productVersion)" in
+    10.6)
+        USE_PACKAGEMAKER=1
+        DONT_USE_RPM_SOURCES=1
+        ;;  # ?? lost to the sands of time
+    10.7) ;;  # ?? lost to the sands of time
+    10.8) ;;  # ?? lost to the sands of time
+    10.9) ;;  # ?? lost to the sands of time
+    10.10)
+        # This was built with XCode 6.1 command line tools, but that version of XCode no longer
+        # supports a way to find its version on the command line.
+        ;;
+esac
+
+export PATH=`xcode-select -print-path`:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # set up a clean build dir
 if test -d build; then
@@ -32,8 +44,21 @@ mkdir build
 BUILD=$PWD/build
 cd $BUILD
 
+if test -n "$DONT_USE_RPM_SOURCES"; then
+    # XXX This next line fails on snow... need the tar.gz itself
+    curl -L http://puppetagain.pub.build.mozilla.org/data/repos/yum/releng/public/CentOS/6/x86_64/mozilla-$pyrealname-mercurial-$version-$srpm_release.el6.src.rpm | bsdtar -x
+else;
+    if test -f "../$relname-$version.tar.gz"; then
+        echo Copying $realname-$version.tar.gz into build environment
+        cp ../$realname-$version.tar.gz ./
+    else;
+        echo "Unable to find $realname-$version.tar.gz in current directory"
+        exit 1
+    fi;
+fi;
+
 # %prep
-tar -zxf ../$realname-$version.tar.gz
+tar -zxf $realname-$version.tar.gz
 cd $realname-$version
 
 PYTHON=/tools/$pyrealname/bin/python$pyver
@@ -61,7 +86,13 @@ mkdir dmg
 fullname=$pyrealname-$realname-$version-$release
 pkg=dmg/$fullname.pkg
 dmg=$fullname.dmg
-packagemaker -r $ROOT -v -i com.mozilla.$pyrealname-$realname -o $pkg -l /
+if test -n "$USE_PACKAGEMAKER"; then
+    # XXX pkgbuild not avail on 10.6
+    PATH="$PATH:/tools/packagemaker/bin"
+    packagemaker --root $ROOT -i com.mozilla.$pyrealname-$realname -o $pkg -l /
+else;
+    pkgbuild -r $ROOT -i com.mozilla.$pyrealname-$realname --install-location / $pkg
+fi
 hdiutil makehybrid -hfs -hfs-volume-name "mozilla-$pyrealname-$realname-$version-$release" -o ./$dmg dmg
 echo "Result:"
 echo $PWD/$dmg

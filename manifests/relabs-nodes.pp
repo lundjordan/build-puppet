@@ -8,14 +8,6 @@ node "relabs-puppet2.relabs.releng.scl3.mozilla.com" {
     include toplevel::server::puppetmaster
 }
 
-node "openstack1.relabs.releng.scl3.mozilla.com" {
-    include toplevel::server
-}
-
-node "neutron1.relabs.releng.scl3.mozilla.com" {
-    include toplevel::server
-}
-
 node "hp1.relabs.releng.scl3.mozilla.com" {
     include toplevel::base
 }
@@ -31,7 +23,6 @@ node "hp4.relabs.releng.scl3.mozilla.com" {
 }
 
 node "hp5.relabs.releng.scl3.mozilla.com" {
-    include toplevel::server
 }
 
 node "hp6.relabs.releng.scl3.mozilla.com" {
@@ -71,8 +62,14 @@ node "ix1204-4.relabs.releng.scl3.mozilla.com" {
 }
 
 node "ix1204-5.relabs.releng.scl3.mozilla.com" {
+    include toplevel::server
 }
 
-node "taras-ubuntu1.relabs.releng.scl3.mozilla.com" {
+node "ix1204-9.relabs.releng.scl3.mozilla.com" {
+    # temporary syslog host for bug 1066145
+    include toplevel::server
+}
+
+node "dividehex-test.relabs.releng.scl3.mozilla.com" {
     include toplevel::server
 }

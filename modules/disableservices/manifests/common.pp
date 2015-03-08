@@ -2,12 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class disableservices::common {
-# This class disables unnecessary services common to both server and slave
+    # This class disables unnecessary services common to both server and slave
 
     case $::operatingsystem {
         CentOS : {
             service {
-                ['acpid', 'anacron', 'apmd', 'atd', 'auditd', 'autofs',
+                ['acpid', 'anacron', 'apmd', 'atd', 'autofs',
                 'avahi-daemon', 'avahi-dnsconfd', 'bluetooth',
                 'cups', 'cups-config-daemon', 'gpm', 'hidd', 'hplip', 'kudzu',
                 'mcstrans', 'mdmonitor', 'pcscd', 'restorecond', 'rpcgssd',
@@ -68,9 +68,18 @@ class disableservices::common {
                             ensure => stopped,
                     }
                 }
-                10.9: {
+                10.9, 10.10: {
                     service {
-                        'com.apple.softwareupdated':
+                        [
+                            'com.apple.softwareupdated',
+                            'com.apple.systemstatsd',
+                            'com.apple.systemstats.daily',
+                            'com.apple.systemstats.analysis',
+                            'com.apple.metadata.mds',
+                            'com.apple.metadata.mds.index',
+                            'com.apple.metadata.mds.scan',
+                            'com.apple.metadata.mds.spindump',
+                        ]:
                             enable => false,
                             ensure => stopped,
                     }
@@ -83,83 +92,44 @@ class disableservices::common {
                 "remove-index" :
                     command => "/usr/bin/mdutil -a -E",
                     refreshonly => true ;
-                "disable-panic-reporting" :
-                    command =>
-                    "/bin/launchctl unload -w /System/Library/LaunchAgents/com.apple.ReportPanic.plist",
-                    onlyif =>
-                    "/bin/launchctl list | /usr/bin/grep -q 'com.apple.ReportPanic'";            
+                "disable-panic-reporting":
+                    command => "/bin/launchctl unload -w /System/Library/LaunchAgents/com.apple.ReportPanic.plist",
+                    onlyif => "/bin/launchctl list | /usr/bin/grep -q 'com.apple.ReportPanic$'";
+                "disable-panic-reporting-service":
+                    command => "/bin/launchctl unload -w /System/Library/LaunchDaemons/com.apple.ReportPanicService.plist",
+                    onlyif => "/bin/launchctl list | /usr/bin/grep -q 'com.apple.ReportPanicService$'";
             }
             osxutils::defaults {
             # set the global preference to not start bluetooth mouse assistant
             'disable-bluetooth-mouse':
                 domain => "/Library/Preferences/com.apple.Bluetooth",
                 key => "BluetoothAutoSeekPointingDevice",
-                value => "0",
-                require => Class['users::builder'];
+                value => "0";
             }
             osxutils::defaults {
             # set the global preference to not start bluetooth keyboard assistant
                 'disable-bluetooth-keyboard':
                     domain => "/Library/Preferences/com.apple.Bluetooth",
                     key => "BluetoothAutoSeekKeyboard",
-                    value => "0",
-                    require => Class['users::builder'];
+                    value => "0";
             }
 	    osxutils::defaults {
 	    # set the global preference to not restart apps open before reboot
 	        'disable-relaunch-apps':
 		    domain => "/Library/Preferences/com.apple.loginwindow",
                     key => "LoginwindowLaunchesRelaunchApps",
-                    value => "0",
-                    require => Class['users::builder'];
+                    value => "0";
 	    }
             file {
                 "/var/lib/puppet/.indexing-disabled" :
                     content => "indexing-disabled",
                     notify => Exec["disable-indexing", "remove-index"] ;
             }
-            osxutils::defaults {
-                'builder-disablescreensaver':
-                    domain => "$::users::builder::home/Library/Preferences/ByHost/com.apple.screensaver.$sp_platform_uuid",
-                    key => "idleTime",
-                    value => "0",
-                    require => Class['users::builder'];
-            }
-            file {
-                "$::users::builder::home/Library/Preferences/ByHost":
-                    ensure => directory,
-                    owner => $::users::builder::username,
-                    group => $::users::builder::group,
-                    mode => 0700,
-                    require => Class['users::builder'];
-                "$::users::builder::home/Library/Preferences/ByHost/com.apple.screensaver.$sp_platform_uuid.plist":
-                    ensure => file,
-                    owner => $::users::builder::username,
-                    group => $::users::builder::group,
-                    mode => 0600,
-                    require => Class['users::builder'];
-            }
-
-            # disable Apple's "unsafe files from the internet" warnings
-            # http://www.davinian.com/os-x-leopard-are-you-sure-you-want-to-open-it/
-            # (as per earlier releng puppet implementations of this).
-            file {
-                "$::users::builder::home/Library/Preferences/com.apple.DownloadAssessment.plist":
-                    source => "puppet:///modules/${module_name}/com.apple.DownloadAssessment.plist",
-                    owner => $::users::builder::username,
-                    group => $::users::builder::group,
-                    mode => 0600,
-                    require => Class['users::builder'];
-            }
-            # and to make double-sure, turn off quarantining:
-            # http://superuser.com/questions/38658/how-to-suppress-repetition-of-warnings-that-an-application-was-downloaded-from-t
-            osxutils::defaults {
-                "builder-disable-quarantine":
-                    domain => "$::users::builder::home/Library/Preferences/com.apple.LaunchServices.plist",
-                    key => "LSQuarantine",
-                    value => "0",
-                    require => Class['users::builder'];
-            }
+        }
+        Windows: {
+            include disableservices::disableupdates
+            include disableservices::disableddns
+            include disableservices::winreport
         }
     }
 }

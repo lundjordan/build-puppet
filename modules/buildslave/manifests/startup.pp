@@ -11,23 +11,33 @@ class buildslave::startup {
 
     include ::shared
     include buildslave::install
-    include dirs::usr::local::bin
     include users::root
 
-    # everyone uses runslave.py in the same place
-    file {
-        "/usr/local/bin/runslave.py":
-            source => "puppet:///modules/buildslave/runslave.py",
-            owner  => "root",
-            group => $users::root::group,
-            mode => 755;
+    case $::operatingsystem {
+        # everyone but windows uses runslave.py in the same place
+        Windows: {
+                file {
+                    'C:/programdata/puppetagain/runslave.py':
+                        source  => "puppet:///modules/buildslave/runslave.py";
+            }
+        }
+        default: {
+            include dirs::usr::local::bin
+            file {
+                "/usr/local/bin/runslave.py":
+                    source => "puppet:///modules/buildslave/runslave.py",
+                    owner  => "root",
+                    group => $users::root::group,
+                    mode => 755;
+            }
+        }
     }
-
     # select an implementation class based on operating system
     $startuptype = $::operatingsystem ? {
-        CentOS      => "initd",
-        Darwin      => "launchd",
-        Ubuntu      => "desktop"
+        CentOS      => "runner",
+        Darwin      => "runner",
+        Ubuntu      => "runner",
+        Windows     => "windows",
     }
     Anchor['buildslave::startup::begin'] ->
     class {

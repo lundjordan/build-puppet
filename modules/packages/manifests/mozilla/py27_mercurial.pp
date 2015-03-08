@@ -17,29 +17,45 @@ class packages::mozilla::py27_mercurial {
             Anchor['packages::mozilla::py27_mercurial::begin'] ->
             package {
                 "mozilla-python27-mercurial":
-                    ensure => '2.5.4-1.el6',
+                    ensure => '3.2.1-1.el6',
                     require => Class['packages::mozilla::python27'];
             } -> Anchor['packages::mozilla::py27_mercurial::end']
         }
         Ubuntu: {
-            include packages::mercurial
-            $mercurial = "/usr/bin/hg"
+            $mercurial = "/tools/python27-mercurial/bin/hg"
+            realize(Packages::Aptrepo['mozilla-mercurial'])
             Anchor['packages::mozilla::py27_mercurial::begin'] ->
-            file {
-                ["/tools/python27-mercurial", "/tools/python27-mercurial/bin"]:
-                    ensure => directory;
-                "/tools/python27-mercurial/bin/hg":
-                    ensure => link,
-                    target => "/usr/bin/hg";
+            package {
+                "mozilla-python27-mercurial":
+                    ensure => '3.2.1',
+                    require => Class['packages::mozilla::python27'];
             } -> Anchor['packages::mozilla::py27_mercurial::end']
+
+            # Some things want to find hg in /usr/bin, so symlink
+            # but only if its not present from another package
+            file {
+                "/usr/bin/hg":
+                    ensure => "link",
+                    replace => "no",
+                    mode => 755, # if the binary is here, the symlink won't care
+                    target => $mercurial;
+            }
         }
         Darwin: {
-            $mercurial = "/tools/python27_mercurial/bin/hg"
+            $mercurial = "/tools/python27-mercurial/bin/hg"
             Anchor['packages::mozilla::py27_mercurial::begin'] ->
             packages::pkgdmg {
                 python27-mercurial:
-                    version => "2.5.4-2";
+                    version => "3.2.1-1";
             } -> Anchor['packages::mozilla::py27_mercurial::end']
+        }
+        Windows: {
+            # on Windows, we use the hg that ships with MozillaBuild
+            $mercurial = 'C:\mozilla-build\hg\hg.exe'
+            include packages::mozilla::mozilla_build
+            Anchor['packages::mozilla::py27_mercurial::begin'] ->
+            Class['packages::mozilla::mozilla_build']
+            -> Anchor['packages::mozilla::py27_mercurial::end']
         }
         default: {
             fail("cannot install on $::operatingsystem")

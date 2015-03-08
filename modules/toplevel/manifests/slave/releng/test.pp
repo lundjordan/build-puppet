@@ -8,11 +8,27 @@ class toplevel::slave::releng::test inherits toplevel::slave::releng {
     include users::builder::autologin
     include ntp::atboot
     include packages::fonts
+    include packages::unzip
     include tweaks::fonts
-    include tweaks::cleanup
+    include runner::tasks::cleanup
     include dirs::builds::hg_shared
     include dirs::builds::git_shared
     include dirs::builds::tooltool_cache
+
+    case $::operatingsystem {
+        "Ubuntu": {
+            include runner::tasks::update_shared_repos
+            include runner::tasks::checkout_tools
+            include runner::tasks::restart_services
+            class {
+                'runner::tasks::purge_builds':
+                    required_space => 4;
+            }
+            if ($::ec2_instance_id != "") {
+                include runner::tasks::check_ami
+            }
+         }
+    }
 
     class {
         'slave_secrets':

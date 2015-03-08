@@ -12,7 +12,7 @@ class packages::wget {
             Anchor['packages::wget::begin'] ->
             package {
                 "wget":
-                    ensure => '1.15-1.el6';  # hand-compiled; see .spec
+                    ensure => '1.15-2.el6';  # hand-compiled; see .spec
             } -> Anchor['packages::wget::end']
         }
         Ubuntu: {
@@ -28,6 +28,13 @@ class packages::wget {
                 wget:
                     version => "1.12-1";
             } -> Anchor['packages::wget::end']
+        }
+        Windows: {
+            # on Windows, we use the wget that ships with MozillaBuild
+            include packages::mozilla::mozilla_build
+            Anchor['packages::wget::begin'] ->
+            Class['packages::mozilla::mozilla_build']
+            -> Anchor['packages::wget::end']
         }
         default: {
             fail("cannot install on $::operatingsystem")

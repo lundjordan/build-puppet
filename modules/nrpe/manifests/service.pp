@@ -2,24 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class nrpe::service {
-    include packages::nrpe
     include nrpe::settings
 
     case $::operatingsystem {
         Ubuntu: {
+            include packages::nrpe
             service {
                 "nagios-nrpe-server":
                     enable => "true",
                     ensure => "running",
                     require => Class['packages::nrpe'];
-                # ubuntu helpfully starts a nagios server for us..
-                "nagios3":
-                    ensure => stopped,
-                    enable => false,
-                    require => Class['packages::nrpe'];
             }
         }
         CentOS: {
+            include packages::nrpe
             service {
                 "nrpe":
                     enable => "true",
@@ -28,6 +24,7 @@ class nrpe::service {
             }
         }
         Darwin: {
+            include packages::nrpe
             $svc_plist = "/Library/LaunchDaemons/org.nagios.nrpe.plist"
             file {
                 $svc_plist:
@@ -41,6 +38,15 @@ class nrpe::service {
                         Class['packages::nrpe'],
                         File[$svc_plist],
                     ];
+            }
+        }
+        Windows: {
+            include packages::nsclient_plus_plus
+            service {"NSClientpp":
+                ensure    => running,
+                enable    => true,
+                require   => Class[ "packages::nsclient_plus_plus"],
+                subscribe => Concat['c:\program files\nsclient++\nsc.ini'],
             }
         }
         default: {

@@ -7,38 +7,28 @@ class puppet::atboot {
     include puppet::puppetize_sh
     include puppet::settings
     include packages::puppet
-    include dirs::usr::local::bin
+    include needs_reboot
 
     $puppet_server = $::puppet::settings::puppet_server
     $puppet_servers = $::puppet::settings::puppet_servers
 
-    # signal puppetize.sh to reboot after this puppet run, if we're running
-    # puppetize.sh (identified via the $puppetizing fact)
-    if ($puppetizing) {
-        file {
-            "/REBOOT_AFTER_PUPPET":
-                content => "please!";
+    case ($::operatingsystem) {
+        windows: {
+            include dirs::etc
+            $puppetmasters_txt = "${dirs::etc::dir}/puppetmasters.txt"
         }
-    }
-
-    # and allow other systems to request a reboot as well (e.g., for installing
-    # kernel drivers)
-
-    exec {
-        # ask the puppet startup script to reboot
-        "reboot-after-puppet":
-            command => "touch /REBOOT_AFTER_PUPPET",
-            path => ['/bin/', '/usr/bin/'],
-            refreshonly => true;
+        default: {
+            $puppetmasters_txt = "${dirs::etc::dir}/puppet/puppetmasters.txt"
+        }
     }
 
     # install the list of puppetmaster mirrors
     file {
-        "/etc/puppet/puppetmasters.txt":
+        $puppetmasters_txt:
             content => template("puppet/puppetmasters.txt.erb");
     }
 
-    # common source code for the startup scripts, used in templates
+    # common (shell) source code for the startup scripts, used in templates
     $puppet_atboot_common = template("puppet/puppet-atboot-common.erb")
 
     # create a service
@@ -60,7 +50,7 @@ class puppet::atboot {
                     # then we need to explicitly force an update of the
                     # rc3.d symlink and we want to reboot because we've changed
                     # what we want to come after puppet in the boot order
-                    notify => [ Exec['initd-refresh'], Exec['reboot-after-puppet'] ];
+                    notify => [ Exec['initd-refresh'], Exec['reboot_semaphore'] ];
             }
 
             exec {
@@ -108,6 +98,7 @@ class puppet::atboot {
             # the autologin takes place.  The script touches a semaphore file
             # when puppet has run to completion, and this signals the user-level
             # launchd to start the buildslave daemon.  Got that?
+            include dirs::usr::local::bin
             file {
                 "/Library/LaunchDaemons/com.mozilla.puppet.plist":
                     owner => root,
@@ -119,6 +110,25 @@ class puppet::atboot {
                     group => wheel,
                     mode => 0755,
                     content => template("puppet/puppet-darwin-run-puppet.sh.erb");
+            }
+        }
+        Windows: {
+            # On Windows, we use a runpuppet.rb script, run from a scheduled task.  It creates
+            # a sempahore file when it's complete.
+            include dirs::programdata::puppetagain
+            $puppet_semaphore = 'C:\ProgramData\PuppetAgain\puppetcomplete.semaphore'
+            file {
+                "c:/programdata/puppetagain/runpuppet.rb":
+                    content => template("${module_name}/puppet-atboot-runpuppet.rb.erb");
+                "c:/programdata/puppetagain/runpuppet.xml":
+                    content => template("${module_name}/puppet-atboot-runpuppet.xml.erb");
+            }
+
+            $schtasks = 'C:\Windows\system32\schtasks.exe'
+            shared::execonce {
+                "puppet-atboot-schtask":
+                    command => "$schtasks /Create /XML \"C:\\programdata\\puppetagain\\runpuppet.xml\" /tn RunPuppet",
+                    require => File['c:/programdata/puppetagain/runpuppet.xml'];
             }
         }
         default: {

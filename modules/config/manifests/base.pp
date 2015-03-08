@@ -57,8 +57,17 @@ class config::base {
     # the URL at which puppet facts are sent to Foreman
     $puppet_server_facturl = ""
 
-    # the hostname of a centralized syslog server puppetmasters should forward to
-    $puppetmaster_syslog_server = ""
+    # the hostname (or some more complicated formula generating the hostname)
+    # of the host to which all syslog data should be directed
+    $log_aggregator = ""
+
+    # the hostname of a cef server for auditd output
+    $cef_syslog_server = ""
+
+    # extra hostnames to be included in the puppetmaster certificates as
+    # alternate hostnames.  If $apt_repo_server is not the hostname of your master,
+    # include it in this list.
+    $puppetmaster_cert_extra_names = []
 
     ##
     ## packages and data
@@ -89,11 +98,12 @@ class config::base {
     ## basic host configuration
     ##
 
-    # NTP server to use for time sync
-    $ntp_server = "pool.ntp.org"
+    # NTP servers to use for time sync
+    $ntp_servers = [ "pool.ntp.org" ]
 
-    # The fqdn where your smarthost will send  mail
-    $relay_domains = "smtp.mozilla.org"
+    # The host through which to relay mail; this goes to postfix's relayhost
+    # parameter, so put [..] around it to avoid doing an MX lookup
+    $relayhost = undef
 
     # Whether puppet should manage /etc/sysconfig/network-scripts/ifcfg-eth0,
     # forcing use of DHCP.  Set this to false to set up static IPs on each host
@@ -113,16 +123,27 @@ class config::base {
     # a hash of collectd write modules and there configurations.
     # If undef, module is disabled
     $collectd_write = undef
-    
-    # if set, this is the URL of the HTTP/HTTPS/FTP proxy through which all
-    # outgoing access will be routed.  The exceptions are a list of hostnames
-    # or .-prefixed hostname suffixes which will not be routed through the proxy.
-    $web_proxy_url = ''
+
+    # Those are the host and port of the HTTP/HTTPS/FTP proxy through which all
+    # outgoing access will be routed. If the URL is not set, no proxy is used.
+    # The exceptions are a list of hostnames or .-prefixed hostname suffixes
+    # which will not be routed through the proxy.
+    $web_proxy_host = ''
+    $web_proxy_port = ''
     $web_proxy_exceptions = ['localhost', '127.0.0.1', 'localaddress', '.localdomain.com']
 
     # Physical location of the node, for organizations that need to distinguish
     # between them.
     $node_location = 'unknown'
+
+    # SSH keys that are not available from some extsync process.  Use this in
+    # orgs with no suitable extsync, or for keys that aren't present in the
+    # extsync source.  The format is {username: [key, ..], ..} where key is the
+    # content to be placed in authorized_keys (so, "<type> <key> <comment>")
+    $extra_user_ssh_keys = {}
+
+    # a flag that controls which nodes should install and run MIG Agent
+    $enable_mig_agent = false
 
     ##
     ## users
@@ -153,8 +174,12 @@ class config::base {
     $install_google_api_key = false
     # true if ceph access keys should be installed on build slaves
     $install_ceph_cfg = false
-    # true if secret("mozilla_api_key") should be installed at /builds/mozilla-api.key
-    $install_mozilla_api_key = false
+    # true if mozilla geo location API keys should be installed on build slaves
+    $install_mozilla_geoloc_api_keys = false
+    # true if secret("google_oauth_api_key") should be installed at /builds/google-oauth-api.key
+    $install_google_oauth_api_key = false
+    # true if secret("crash_stats_api_token") should be installed on build slaves
+    $install_crash_stats_api_token = false
 
     # signingserver
 
@@ -166,8 +191,6 @@ class config::base {
     $signing_mac_id = ''
     # The list of IPs allowed to generate new signing tokens (buildmasters)
     $signing_new_token_allowed_ips = []
-    # The redis host used as backend storage for signing
-    $signing_redis_host = ''
     # The mercurial repository from which to pull the signing tools code
     $signing_tools_repo = 'https://hg.mozilla.org/build/tools'
 
@@ -221,6 +244,33 @@ class config::base {
     # root directory for releaserunner; this must be under /builds
     $releaserunner_root = "/builds/releaserunner"
 
+    # runner task settings
+
+    $runner_hg_tools_path = "/tools/checkouts/build-tools"
+    $runner_hg_tools_repo = "https://hg.mozilla.org/build/tools"
+    $runner_hg_tools_branch = "default"
+    $runner_hg_mozharness_path = "/tools/checkouts/mozharness"
+    $runner_hg_mozharness_repo = "https://hg.mozilla.org/build/mozharness"
+    $runner_hg_mozharness_branch = "production"
+
+    $runner_env_hg_share_base_dir = "/builds/hg-shared"
+    $runner_env_git_share_base_dir = "/builds/git-shared"
+
+    $runner_buildbot_slave_dir = ""
+    $runner_clobberer_url = ""
+
+    # shipit_notifier
+
+    # shipit api root
+    $shipit_notifier_api_root = "https://ship-it.mozilla.org"
+    # shipit notifier verbosity level
+    $shipit_notifier_verbose = true
+    # mercurial repository and branch for tools
+    $shipit_notifier_tools = "https://hg.mozilla.org/build/tools"
+    $shipit_notifier_tools_branch = "default"
+    # root directory for shipit_notifier; this must be under /builds
+    $shipit_notifier_root = "/builds/shipit_notifier"
+
     # selfserve (buildapi agent)
 
     # fqdn:port of the buildmaster with which to invoke 'buildbot sendchange'
@@ -257,6 +307,8 @@ class config::base {
 
     # AWS management
 
+    # fqdn of the distinguished_aws_manager
+    $distinguished_aws_manager = ""
     # the username under which all operations take place
     $buildduty_username = 'buildduty'
     # root directory for aws_manager; this must be under /builds
@@ -266,8 +318,7 @@ class config::base {
     # s3 prefix name for aws_manager log parsing
     $cloudtrail_s3_base_prefix = ""
     # mercurial repository and branch for cloud-tools
-    $cloud_tools_hg_repo = "http://hg.mozilla.org/build/cloud-tools"
-    $cloud_tools_hg_branch = "default"
+    $cloud_tools_git_repo = "https://github.com/mozilla/build-cloud-tools"
     $aws_manager_mail_to = "nobody@mozilla.com"
     # slaverebooter
     $slaverebooter_mail_to = "nobody@mozilla.com"
@@ -280,9 +331,28 @@ class config::base {
     # slaveapi instance that slaverebooter should talk to.
     $slaverebooter_slaveapi = ""
 
+    # deploystudio
+    # username and uid of the user deploystudio uses to access its file share
+    $deploystudio_username = 'dsadmin'
+    # deploystudio_uid must be an int greater than 500
+    $deploystudio_uid = 0
+
     # The version of xcode to install with packages::xcode. See that package
     # for the availible options.  If different hosts need different versions,
     # it's fine to use a ternary operator here; see moco-config.pp for an
     # example.
     $xcode_version = undef
+
+    # current_kernel is a string of the kernel release version to be installed. if it
+    # is undef, the module is skipped over otherwise the it will install the kernel
+    # package version specified. obsolete_kernel is an array of kernel version
+    # strings and is optional. If current_kernel is undef, obsolete_kernel has no effect
+    $current_kernel = undef
+    $obsolete_kernels = []
+
+    # Bacula configuration.  Mozilla uses Bacula Enterprise, which is not
+    # redistributable.
+    $bacula_director = '' # hostname of the director
+    $bacula_fd_port = '' # port on the director
+    $bacula_cacert = '' # full text of the CA cert signing the director's keys
 }

@@ -4,11 +4,28 @@
 class packages::openipmi {
     case $::operatingsystem {
         CentOS: {
-            package {
-                [ "OpenIPMI",
-                  "ipmitool",
-                ]:
-                    ensure => latest;
+            case $::operatingsystemrelease {
+                6.2: {
+                    package {
+                        "OpenIPMI":
+                            ensure => latest;
+                        "ipmitool":
+                            # 1.8.11-21 requires a newer libcrypto
+                            ensure => '1.8.11-12.el6';
+                    }
+                }
+                6.5: {
+                    realize(Packages::Yumrepo['openipmi'])
+                    package {
+                        "OpenIPMI":
+                            ensure => latest;
+                        "ipmitool":
+                            ensure => '1.8.11-21.el6';
+                    }
+                }
+                default: {
+                    fail("Unrecognized CentOS version $::operatingsystemrelease")
+                }
             }
         }
         Ubuntu: {

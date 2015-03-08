@@ -29,22 +29,15 @@ class users::builder::account($username, $group, $grouplist, $home) {
                     comment => "Builder";
             }
         }
-#Place holder for Windows builder account creation
-#        Windows: {
-#            if (secret("builder_pw_hash") == '') {
-#                fail('No builder password hash set')
-#            }
-#
-#            user {
-#               $username:
-#		            ensure => present,
-#                    password => secret("builder_pw_hash"),
-#                    shell => "/bin/bash",
-#                    managehome => true,
-#                    groups => $grouplist,
-#                    comment => "Builder";
-#            }
-#        }
+        Windows: {
+            user {
+               $username:
+                    password => secret("builder_pw_cleartext"),
+                    groups  => ["Administrators","Remote Desktop Users"],
+                    managehome => true,
+                    comment => "Builder";
+            }
+        }
         Darwin: {
             # use our custom type and provider, based on http://projects.puppetlabs.com/issues/12833
             # This should be replaced with 'user' once we are running a version of puppet containing the
@@ -97,7 +90,7 @@ class users::builder::account($username, $group, $grouplist, $home) {
                     }
                     $user_req = Darwinuser[$username]
                 }
-                '10.9': {
+                '10.9','10.10': {
                     if (secret("builder_pw_pbkdf2") == '' or secret("builder_pw_pbkdf2_salt") == '') {
                         fail('No builder password pbkdf2 set')
                     }
@@ -109,9 +102,13 @@ class users::builder::account($username, $group, $grouplist, $home) {
                             salt => secret("builder_pw_pbkdf2_salt"),
                             iterations => secret("builder_pw_pbkdf2_iterations"),
                             comment => "Builder",
+                            groups => $grouplist,
                             notify => Exec['kill-builder-keychain'];
                     }
                     $user_req = User[$username]
+                }
+                default: {
+                    fail("Cannot create user on OS X ${macosx_productversion_major}")
                 }
             }
             exec {

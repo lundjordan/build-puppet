@@ -10,4 +10,10 @@ class aws_manager::settings {
     $secrets_dir = "${root}/secrets"
     $cloudtrail_logs_dir = "${root}/cloudtrail_logs"
     $events_dir= "${cloudtrail_logs_dir}/events"
+
+    $distinguished_aws_manager = $config::distinguished_aws_manager
+    $cron_switch = $fqdn ? {
+        $distinguished_aws_manager => present,
+        default => absent,
+    }
 }

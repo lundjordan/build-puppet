@@ -17,18 +17,19 @@ class hardware {
 
     # Nodes running IPMI-compliant hardware should install OpenIPMI
     if (($::manufacturer == "HP" and $::productname =~ /ProLiant/) or
-        ($::manufacturer == "iXsystems" and $::productname == "iX700-C") or
-        # iX700-C's can show up as X8SIL, too
-        ($::manufacturer == "iXsystems" and $::productname == "X8SIL") or
-        ($::manufacturer == "iXsystems" and $::productname == "iX21X4-STIBTRF")) {
-        include packages::openipmi
+        ($::boardmanufacturer == "Supermicro" and $::boardproductname == "X8SIL") or # ix700C
+        ($::boardmanufacturer == "Supermicro" and $::boardproductname == "X8SIT")) { # ix21x4
+        if ($kernel == "Linux") {
+            include hardware::ipmitool
+        }
     }
 
-    # some iX hardware shows up as 'ixSystems', some as 'Supermicro'
-    if (($::manufacturer == 'iXsystems' or $::manufacturer == 'Supermicro') and
-        # iX700-C's can show up as X8SIL, too
-        ($::productname == "iX700-C" or $::productname == "X8SIL" or $::productname == "iX21X4-STIBTRF")) {
-        include tweaks::i82574l_aspm
+    if (($::boardmanufacturer == "Supermicro" and $::boardproductname == "X8SIL") or # ix700C
+        ($::boardmanufacturer == "Supermicro" and $::boardproductname == "X8SIT")) { # ix21x4
+        if ($kernel == "Linux") {
+        # disable some broken NIC features
+            include tweaks::i82574l_aspm
+        }
     }
 
     # OK, so it's not strictly "hardware", but stlil..
@@ -68,4 +69,8 @@ class hardware {
             }
         }
     }
-}
+    if ($::operatingsystem == "Windows") {
+        include hardware::hddoff
+        include hardware::highperformance
+    }
+}   

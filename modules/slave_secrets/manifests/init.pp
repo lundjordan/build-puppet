@@ -3,6 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class slave_secrets($ensure=present, $slave_type) {
+
+    include dirs::etc
+
     # check that the node-level variable is set
     if ($slave_trustlevel == '') {
         fail("No slave_trustlevel is set for this host; add that to your node definition")
@@ -14,12 +17,17 @@ class slave_secrets($ensure=present, $slave_type) {
     }
 
     # set the on-disk trust level if it's not already defined
-    $trustlevel_file = '/etc/slave-trustlevel'
+    $trustlevel_file =  $::operatingsystem ? {
+        windows => 'C:/etc/slave-trustlevel',
+        default => '/etc/slave-trustlevel',
+    }
+
     file {
         $trustlevel_file:
             content => $slave_trustlevel,
             replace => false,
-            mode => filemode(0500);
+            mode => filemode(0500),
+            require => Class[dirs::etc],
     }
 
     # actually do the work of installing, or removing, secrets
@@ -35,41 +43,36 @@ class slave_secrets($ensure=present, $slave_type) {
         }
     }
 
-    # only install the google API key on build slaves
+    # install the following secrets only on build slaves
+    # * google API key
+    # * google oauth API
+    # * ceph credentials
+    # * mozilla API
+    # * crash stats API token
     if ($slave_type == 'build') {
         class {
             'slave_secrets::google_api_key':
+                ensure => $ensure;
+            'slave_secrets::google_oauth_api_key':
+                ensure => $ensure;
+            'slave_secrets::ceph_config':
+                ensure => $ensure;
+            'slave_secrets::mozilla_geoloc_api_keys':
+                ensure => $ensure;
+            'slave_secrets::crash_stats_api_token':
                 ensure => $ensure;
         }
     } else {
         class {
             'slave_secrets::google_api_key':
                 ensure => absent;
-        }
-    }
-
-    # install ceph credentials on build slaves
-    if ($slave_type == 'build') {
-        class {
-            'slave_secrets::ceph_config':
-                ensure => $ensure;
-        }
-    } else {
-        class {
+            'slave_secrets::google_oauth_api_key':
+                ensure => absent;
             'slave_secrets::ceph_config':
                 ensure => absent;
-        }
-    }
-
-    # only install the mozilla API key on build slaves
-    if ($slave_type == 'build') {
-        class {
-            'slave_secrets::mozilla_api_key':
-                ensure => $ensure;
-        }
-    } else {
-        class {
-            'slave_secrets::mozilla_api_key':
+            'slave_secrets::mozilla_geoloc_api_keys':
+                ensure => absent;
+            'slave_secrets::crash_stats_api_token':
                 ensure => absent;
         }
     }

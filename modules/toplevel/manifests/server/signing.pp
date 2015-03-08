@@ -13,8 +13,12 @@ class toplevel::server::signing inherits toplevel::server {
     case $config::org {
         moco: {
             $signing_formats = $operatingsystem ? {
-                Darwin => ["gpg", "dmg", "mar"],
-                CentOS => ["gpg", "signcode", "mar", "jar", "b2gmar"]
+                Darwin => ["dmg"],
+                CentOS => ["gpg", "osslsigncode", "signcode", "mar", "jar", "b2gmar", "emevoucher"]
+            }
+            $concurrency = $::macosx_productversion_major ? {
+                10.9    => 2,
+                default => 4
             }
 
             # This token auth is used for one-off partner repacks
@@ -37,7 +41,8 @@ class toplevel::server::signing inherits toplevel::server {
                     b2g_key0       => "test-oem-1",
                     b2g_key1       => "test-carrier-1",
                     b2g_key2       => "test-mozilla-1",
-                    formats        => $signing_formats;
+                    formats        => $signing_formats,
+                    concurrency    => $concurrency;
             }
 
             signingserver::instance {
@@ -56,7 +61,8 @@ class toplevel::server::signing inherits toplevel::server {
                     b2g_key1       => "test-carrier-1",
                     b2g_key2       => "test-mozilla-1",
                     formats        => $signing_formats,
-                    signcode_timestamp => "no";
+                    signcode_timestamp => "no",
+                    concurrency    => $concurrency;
             }
             signingserver::instance {
                 "rel-key-signing-server":
@@ -75,7 +81,8 @@ class toplevel::server::signing inherits toplevel::server {
                     b2g_key0       => "test-oem-1",
                     b2g_key1       => "test-carrier-1",
                     b2g_key2       => "test-mozilla-1",
-                    formats        => $signing_formats;
+                    formats        => $signing_formats,
+                    concurrency    => $concurrency;
             }
         }
         relabs: {

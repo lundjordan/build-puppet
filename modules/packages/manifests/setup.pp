@@ -56,11 +56,51 @@ class packages::setup {
 
                 "hp-proliantsupportpack":
                     url_path => "repos/yum/mirrors/hp/proliantsupportpack/CentOS/$majorver/$architecture/current";
+
+                "mig-agent":
+                    url_path => "repos/yum/custom/mig-agent/$architecture";
+
+                "git-remote-hg":
+                    url_path => "repos/yum/custom/git-remote-hg/$architecture";
+
+                "openssl":
+                    url_path => "repos/yum/custom/openssl/$architecture";
+
+                "bash":
+                    url_path => "repos/yum/custom/bash/$architecture";
+
+                "osslsigncode":
+                    url_path => "repos/yum/custom/osslsigncode/$architecture";
+
+                "auditd":
+                    url_path => "repos/yum/custom/auditd/$architecture";
+
+                "openipmi":
+                    url_path => "repos/yum/custom/openipmi/$architecture";
+
+                "mock_mozilla":
+                    url_path => "repos/yum/custom/mock_mozilla/$architecture";
+
+                "debian": # misc debian utilities
+                    url_path => "repos/yum/custom/debian/$architecture";
+
+                "kernel":
+                    url_path => "repos/yum/custom/kernel/$architecture";
+
+                "glibc":
+                    url_path => "repos/yum/custom/glibc/$architecture";
+
+                "rsyslog":
+                    url_path => "repos/yum/custom/rsyslog/$architecture";
+
+                # a licensed copy of bacula enterprise, so not publicly available
+                "bacula-enterprise":
+                    url_path => "repos/private/yum/mirrors/bacula-enterprise/$majorver-$architecture";
             }
 
             # to flush the metadata cache, increase this value by one (or
             # anything, really, just change it).
-            $repoflag = 16
+            $repoflag = 33
             file {
                 "/etc/.repo-flag":
                     content =>
@@ -95,7 +135,7 @@ class packages::setup {
             }
             # to flush the package index, increase this value by one (or
             # anything, really, just change it).
-            $repoflag = 14
+            $repoflag = 27
             file {
                 "/etc/.repo-flag":
                     content =>
@@ -148,6 +188,34 @@ class packages::setup {
                     url_path     => "repos/apt/xorg-edgers",
                     distribution => "${lsbdistcodename}",
                     components   => ["main"];
+                "nginx-development":
+                    url_path     => "repos/apt/nginx-development",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["main"];
+                "mig-agent":
+                    url_path     => "repos/apt/custom/mig-agent",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
+                "openssl":
+                    url_path     => "repos/apt/custom/openssl",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
+                "bash":
+                    url_path     => "repos/apt/custom/bash",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
+                "eglibc":
+                    url_path     => "repos/apt/custom/eglibc",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
+                "mozilla-mercurial":
+                    url_path     => "repos/apt/custom/mozilla-mercurial",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
+                "kernel":
+                    url_path     => "repos/apt/custom/kernel",
+                    distribution => "${lsbdistcodename}",
+                    components   => ["all"];
             }
         }
         Darwin: {

@@ -19,11 +19,12 @@ class users::root::account($username, $group, $home) {
             }
         }
 	    Windows: {
-            # Windows Puppet only verifies that root user is present
+            # Windows Puppet only verifies that root user is present and sets password
 	        user {
                 root:
                     ensure => present,
                     forcelocal => true,
+                    password => secret("root_pw_cleartext");
 		    }
 	    }
         Darwin: {
@@ -67,7 +68,7 @@ class users::root::account($username, $group, $home) {
                     }
                     $user_req = Darwinuser[$username]
                 }
-                '10.9': {
+                '10.9','10.10': {
                     if (secret("root_pw_pbkdf2") == '' or secret("root_pw_pbkdf2_salt") == '') {
                         fail('No root password pbkdf2 set')
                     }

@@ -27,6 +27,7 @@ class users::builder::setup($home, $username, $group) {
             group => $group,
             authorized_keys => $::config::admin_users,
             authorized_keys_allows_extras => true,
+            cleartext_password => secret('builder_pw_cleartext'),
             config => template("users/builder-ssh-config.erb");
     } -> Anchor['users::builder::setup::end']
 
@@ -35,29 +36,39 @@ class users::builder::setup($home, $username, $group) {
 
     file {
         "$home/.gitconfig":
-            mode => 0644,
+            mode => filemode(0644),
             owner => $username,
             group => $group,
             source => "puppet:///modules/users/gitconfig";
         "$home/.bashrc":
-            mode => 0644,
+            mode => filemode(0644),
             owner => $username,
             group => $group,
             content => template("${module_name}/builder-bashrc.erb");
         "$home/.hgrc":
-            mode => 0644,
+            mode => filemode(0644),
             owner => $username,
             group => $group,
             source => "puppet:///modules/users/hgrc";
         "$home/.vimrc":
-            mode => 0644,
+            mode => filemode(0644),
             owner => $username,
             group => $group,
             source => "puppet:///modules/users/vimrc";
         "$home/.screenrc":
-            mode => 0644,
+            mode => filemode(0644),
             owner => $username,
             group => $group,
             source => "puppet:///modules/users/screenrc";
+    }
+
+    ##
+    # disable account-specific services
+
+    class {
+        'disableservices::user':
+            username => $username,
+            group => $group,
+            home => $home;
     }
 }

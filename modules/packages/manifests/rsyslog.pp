@@ -4,11 +4,18 @@
 class packages::rsyslog {
     case $::operatingsystem {
         CentOS: {
+            realize(Packages::Yumrepo['rsyslog'])
             package {
                 "rsyslog":
-                    ensure => latest;
+                    ensure => "latest";
             }
         }
+        Ubuntu: {
+            package {
+                "rsyslog":
+                    ensure => "latest";
+            }   
+        }           
 
         default: {
             fail("cannot install on $::operatingsystem")

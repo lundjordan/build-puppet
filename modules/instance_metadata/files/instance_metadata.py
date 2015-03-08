@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Populates a file (e.g. /etc/instance_data.json) with instance metadata
+Populates a file (e.g. /etc/instance_metadata.json) with instance metadata
 
 Usage:
     instance_metadata.py [-o output_file]
@@ -50,6 +50,7 @@ def main():
         "aws_instance_id": get_aws_metadata("instance-id"),
         "aws_instance_type": get_aws_metadata("instance-type"),
         "aws_ami_id": get_aws_metadata("ami-id"),
+        "placement/availability_zone": get_aws_metadata("placement/availability-zone"),
     }
     js = json.dumps(metadata)
 

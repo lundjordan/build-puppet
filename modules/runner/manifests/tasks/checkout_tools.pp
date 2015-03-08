@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-# Make sure runner runs at boot
+
 class runner::tasks::checkout_tools($runlevel=0) {
     include packages::mozilla::hgtool
     include runner
@@ -18,6 +18,6 @@ class runner::tasks::checkout_tools($runlevel=0) {
                 Class['packages::mozilla::hgtool'],
                 File['/tools/checkouts'],
             ],
-            source  => 'puppet:///modules/runner/checkout_tools';
+            content  => template("${module_name}/tasks/checkout_tools.erb");
     }
 }

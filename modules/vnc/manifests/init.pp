@@ -1,10 +1,13 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 class vnc {
     include config
     include users::builder
-    include packages::vncserver
+    if ($::operatingsystem != Windows) {
+        include packages::vncserver
+    }
 
     case $::operatingsystem {
         Darwin: {
@@ -73,6 +76,10 @@ class vnc {
                     show_diff => false;
             }
             # note that x11vnc isn't started automatically
+        }
+        Windows: {
+            include packages::ultravnc
+            include vnc::ultravnc_ini
         }
         default: {
             fail("Cannot set up VNC on this platform")

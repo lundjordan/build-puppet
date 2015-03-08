@@ -8,7 +8,7 @@ class ntp::daemon {
     include users::root
     include ntp::atboot
 
-    $ntpserver = $config::ntp_server
+    $ntpservers = $config::ntp_servers
     case $::operatingsystem {
         CentOS, Ubuntu: {
             file {
@@ -28,15 +28,31 @@ class ntp::daemon {
             }
         }
         Darwin: {
-            exec {
-                "set-time-server" :
-                command => "/usr/sbin/systemsetup -setnetworktimeserver ${ntpserver}",
-                refreshonly => true;
-            }
             file {
-                "$vardir/.puppet-ntpserver" :
-                    content => $ntpserver,
-                    notify => Exec["set-time-server"];
+                "/etc/ntp.conf" :
+                    content => template("ntp/ntp-darwin.conf.erb"),
+                    mode => 644,
+                    owner => root,
+                    group => $users::root::group;
+            }
+            service {
+                'org.ntp.ntpd':
+                    subscribe => File["/etc/ntp.conf"],
+                    enable => true,
+                    ensure => running;
+            }
+            # OS X Mavericks' NTP support is broken:
+            #  - http://www.atmythoughts.com/living-in-a-tech-family-blog/2014/2/28/what-time-is-it
+            # The easy solution here is just to restart ntpd periodically in a
+            # crontask.  This has the effect of resetting the time
+            # periodically, but it's the closest that we can get.  This *may*
+            # leave ntp.drift accurate enough that pacemaker can avoid totally
+            # messing the time up between cron runs, but that remains to be
+            # seen.
+            cron {
+                'whack-apple-ntpd':
+                    command => '/usr/bin/killall ntpd',
+                    minute => 0;
             }
         }
     }

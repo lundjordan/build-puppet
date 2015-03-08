@@ -25,9 +25,11 @@ class instance_metadata {
                     command => "$python /usr/local/bin/instance_metadata.py -o /etc/instance_metadata.json";
             }
 
-            # On Linux systems, run from init.d on boot
+            # On Ubuntu systems, run from init.d on boot, but on CentOS, run in
+            # runner (https://bugzilla.mozilla.org/show_bug.cgi?id=1052581 will
+            # make these match)
             case $::operatingsystem {
-                Ubuntu, CentOS: {
+                Ubuntu: {
                     file {
                         "/etc/init.d/instance_metadata":
                             require => File["/usr/local/bin/instance_metadata.py"],
@@ -46,15 +48,34 @@ class instance_metadata {
                             enable    => true;
                     }
                 }
+                CentOS: {
+                    runner::task {
+                        "00-instance_metadata":
+                            require => File["/usr/local/bin/instance_metadata.py"],
+                            content => template("${module_name}/runner_task.sh.erb");
+                    }
+
+                    # temporary, to uninstall the init task
+                    file {
+                        "/etc/init.d/instance_metadata":
+                            ensure => absent,
+                            notify => Service["instance_metadata"];
+                    }
+                    service {
+                        "instance_metadata":
+                            enable => false;
+                    }
+                }
                 default: {
                     fail("instance_metadata is not supported on $::operatingsystem")
                 }
             }
         }
         default: {
-            # Non-AWS machines should have empty metadata
+            # Non-AWS machines (even windows!) should have empty metadata
+            include dirs::etc
             file {
-                "/etc/instance_metadata.json":
+                "${dirs::etc::dir}/instance_metadata.json":
                     owner   => root,
                     mode    => 0644,
                     content => "{}";

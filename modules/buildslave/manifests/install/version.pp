@@ -8,6 +8,10 @@
 # ensure: present/absent
 define buildslave::install::version($active=false, $ensure="present") {
     $version = $title
+        $virtualenv_path = $::operatingsystem ? {
+            windows => "c:\\mozilla-build\\buildbot-$version",
+            default => "/tools/buildbot-$version",
+        }
 
     anchor {
         "buildslave::install::version::${version}::begin": ;
@@ -17,7 +21,7 @@ define buildslave::install::version($active=false, $ensure="present") {
     # set the parameters for the virtualenv below.  Each version should set
     # $packages explicitly.
     case $version {
-        "0.8.4-pre-moz2": {
+        "0.8.4-pre-moz2", "0.8.4-pre-moz3", "0.8.4-pre-moz4", "0.8.4-pre-moz5", "0.8.4-pre-moz6": {
             include packages::mozilla::python27
             $py_require = Class['packages::mozilla::python27']
             $packages = [
@@ -39,26 +43,39 @@ define buildslave::install::version($active=false, $ensure="present") {
         present: {
             Anchor["buildslave::install::version::${version}::begin"] ->
             python::virtualenv {
-                "/tools/buildbot-$version":
+                "$virtualenv_path":
                     python => $::packages::mozilla::python27::python,
                     require => $py_require,
                     packages => $packages;
             } -> Anchor["buildslave::install::version::${version}::end"]
-
-            if $active {
-                Anchor["buildslave::install::version::${version}::begin"] ->
-                file {
-                    "/tools/buildbot":
-                        ensure => "link",
-                        target => "/tools/buildbot-$version";
-                } -> Anchor["buildslave::install::version::${version}::end"]
+            if ($active) {
+                case $::operatingsystem {
+                    Windows: {
+                        file {
+                            "C:/mozilla-build/bbpath.bat":
+                                content => "set BUILDBOT_PATH=$virtualenv_path";
+                        }
+                        # Append the virtual environment directory to the Windows path
+                        windows_path {
+                            "$virtualenv_path":
+                                ensure => present;
+                        }
+                    }
+                    default: {
+                        Anchor["buildslave::install::version::${version}::begin"] ->
+                            file {
+                                "/tools/buildbot":
+                                    ensure => "link",
+                                    target => "$virtualenv_path";
+                        } -> Anchor["buildslave::install::version::${version}::end"]
+                    }
+                }
             }
         }
-
         absent: {
             # absent? that's easy - blow away the directory
             python::virtualenv {
-                "/tools/buildbot-$version":
+                 "$virtualenv_path":
                     python => $::packages::mozilla::python27::python,
                     packages => $packages,
                     ensure => absent;

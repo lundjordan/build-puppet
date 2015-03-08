@@ -12,7 +12,7 @@ class slave_secrets::ssh_keys($slave_type) {
             $staging_keyset = {
                 'trybld_dsa' => 'builder_ssh_key_staging_trybld_dsa',
                 'b2gtry_dsa' => 'builder_ssh_key_staging_b2gbld_dsa',
-                'ffxbld_dsa' => 'builder_ssh_key_staging_ffxbld_dsa',
+                'ffxbld_rsa' => 'builder_ssh_key_staging_ffxbld_rsa',
                 'xrbld_dsa' => 'builder_ssh_key_staging_xrbld_dsa',
                 'tbirdbld_dsa' => 'builder_ssh_key_staging_tbirdbld_dsa',
                 'b2gbld_dsa' => 'builder_ssh_key_staging_b2gbld_dsa',
@@ -23,6 +23,7 @@ class slave_secrets::ssh_keys($slave_type) {
             }
             $prod_core_keyset = {
                 'ffxbld_dsa' => 'builder_ssh_key_prod_ffxbld_dsa',
+                'ffxbld_rsa' => 'builder_ssh_key_prod_ffxbld_rsa',
                 'xrbld_dsa' => 'builder_ssh_key_prod_xrbld_dsa',
                 'tbirdbld_dsa' => 'builder_ssh_key_prod_tbirdbld_dsa',
                 'b2gbld_dsa' => 'builder_ssh_key_prod_b2gbld_dsa',
@@ -61,13 +62,48 @@ class slave_secrets::ssh_keys($slave_type) {
                 }
             }
         }
+        seamonkey: {
+            # a table of keysets by environment (from slavealloc) and $slave_trustlevel
+            $staging_keyset = {}
+            $prod_core_keyset = {
+                'id_dsa' => 'builder_ssh_key_prod_id_dsa',
+                'seabld_dsa' => 'builder_ssh_key_prod_seabld_dsa',
+            }
+            $environment = slavealloc_environment($clientcert)
+            case $slave_type {
+                test: {
+                    # no keys for test slaves
+                    $keyset = {}
+                }
+                build: {
+                    case $environment {
+                        'dev/pp': {
+                            $keyset = $staging_keyset
+                        }
+                        'prod': {
+                            case $slave_trustlevel {
+                                core: {
+                                    $keyset = $prod_core_keyset
+                                }
+                                default: {
+                                    fail("unknown slave_trustlevel ${slave_trustlevel}")
+                                }
+                            }
+                        }
+                        none: {
+                            $keyset = {}
+                        }
+                        default: {
+                            fail("unknown slavealloc environment ${environment}")
+                        }
+                    }
+                }
+            }
+        }
         relabs: {
             $keyset = {
                 'testy' => 'builder_ssh_key_prod_testy',
             }
-        }
-        servo: {
-            $keyset = {}
         }
         default: {
             fail("no slave_secrets::ssh_key configuration for ${config::org}")
