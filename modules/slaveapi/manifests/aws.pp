@@ -55,6 +55,13 @@ class slaveapi::aws ($environment='prod') {
             require => Python::Virtualenv[$basedir];
     }
 
+    exec {
+        'install-cloud-tools-dist':
+            command => "${slaveapi::base::root}/${environment}/bin/pip install -e ${cloud_tools_dst}",
+            user => $user,
+            require => Git::Repo["cloud-tools-${cloud_tools_dst}"];
+    }
+
     # cron tasks
     file {
         "/etc/cron.d/slaveapi-update-hg-cloud-tools":
