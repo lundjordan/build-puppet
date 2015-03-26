@@ -144,8 +144,9 @@ class config inherits config::base {
 
     $vmwaretools_version = "9.4.0-1280544"
     $vmwaretools_md5 = "4a2d230828919048c0c3ae8420f8edfe"
+    # These need to be in "Foo <foo@bar.com>" style to work with release runner
     $releaserunner_notify_from = "Release Eng <release@mozilla.com>"
-    $releaserunner_notify_to = "release-automation-notifications@mozilla.com"
+    $releaserunner_notify_to = "Release Notifications <release-automation-notifications@mozilla.com>"
     $releaserunner_smtp_server = "localhost"
     $releaserunner_hg_host = "hg.mozilla.org"
     $releaserunner_hg_username = "ffxbld"
@@ -248,6 +249,8 @@ class config inherits config::base {
     $deploystudio_username = 'dsadmin'
     # deploystudio_uid must be an int greater than 500
     $deploystudio_uid = 543647
+    # deploystudio root data directory
+    $deploystudio_dir = "/Deploy"
 
     $xcode_version = $::macosx_productversion_major ? {
         10.6 => "4.2",
