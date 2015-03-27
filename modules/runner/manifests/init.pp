@@ -14,7 +14,7 @@ class runner {
             python   => $packages::mozilla::python27::python,
             require  => Class['packages::mozilla::python27'],
             packages => [
-                'runner==2.0',
+                'runner==1.9',
             ];
     }
 
