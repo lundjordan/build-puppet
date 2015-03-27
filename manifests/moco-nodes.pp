@@ -861,21 +861,21 @@ node "tst-linux32-ec2-jlund2.test.releng.use1.mozilla.com" {
        # the pins must come *before* the toplevel include
        $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
        $pin_puppet_env = "jlund"
-       include toplevel::slave::build
+       include toplevel::slave::releng::test::headless
 }
 
 node "tst-linux32-ec2-jlund3.test.releng.use1.mozilla.com" {
 # the pins must come *before* the toplevel include
     $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
     $pin_puppet_env = "jlund"
-    include toplevel::slave::build
+    include toplevel::slave::releng::test::headless
 }
 
 node "tst-linux32-ec2-jlund4.test.releng.use1.mozilla.com" {
 # the pins must come *before* the toplevel include
     $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
     $pin_puppet_env = "jlund"
-    include toplevel::slave::build
+    include toplevel::slave::releng::test::headless
 }
 
 ## Loaners
