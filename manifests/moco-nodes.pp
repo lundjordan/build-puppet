@@ -882,3 +882,14 @@ node "tst-linux32-ec2-jlund4.test.releng.use1.mozilla.com" {
 }
 
 ## Loaners
+
+## temporary hosts Bug 1141628 and 1141626
+
+node "bld-lion-r4-001.test.releng.scl3.mozilla.com" {
+    include toplevel::base
+}
+
+node "mac-v2-signing5.test.releng.scl3.mozilla.com" {
+    include toplevel::base
+}
+
