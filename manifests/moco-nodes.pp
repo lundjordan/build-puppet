@@ -859,7 +859,7 @@ node /log-aggregator\d+\.srv\.releng\.(scl3|use1|usw2)\.mozilla\.com/ {
 
 node "tst-linux32-ec2-jlund2.test.releng.use1.mozilla.com" {
     # the pins must come *before* the toplevel include
-    $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
+    $pin_puppet_server = "releng-puppet2.build.scl3.mozilla.com"
     $pin_puppet_env = "jlund"
     $slave_trustlevel = 'try'
     include toplevel::slave::releng::test::headless
@@ -867,7 +867,7 @@ node "tst-linux32-ec2-jlund2.test.releng.use1.mozilla.com" {
 
 node "tst-linux32-ec2-jlund3.test.releng.use1.mozilla.com" {
     # the pins must come *before* the toplevel include
-    $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
+    $pin_puppet_server = "releng-puppet2.build.scl3.mozilla.com"
     $pin_puppet_env = "jlund"
     $slave_trustlevel = 'try'
     include toplevel::slave::releng::test::headless
@@ -875,7 +875,7 @@ node "tst-linux32-ec2-jlund3.test.releng.use1.mozilla.com" {
 
 node "tst-linux32-ec2-jlund4.test.releng.use1.mozilla.com" {
     # the pins must come *before* the toplevel include
-    $pin_puppet_server = "releng-puppet2.build.scl1.mozilla.com"
+    $pin_puppet_server = "releng-puppet2.build.scl3.mozilla.com"
     $pin_puppet_env = "jlund"
     $slave_trustlevel = 'try'
     include toplevel::slave::releng::test::headless
