@@ -24,6 +24,7 @@ class log_aggregator {
 
     rsyslog::config {
         "00-papertrail" :
+            # note: diffs will not be shown
             contents => template("${module_name}/papertrail.conf.erb");
     }
 }
