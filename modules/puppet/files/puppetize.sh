@@ -64,7 +64,7 @@ while true; do
     https_proxy= python <<EOF
 import urllib2, getpass
 deploypass="""$deploypass"""
-puppet_server="${PUPPET_SERVER:-puppet}"
+puppet_server=releng-puppet2.srv.releng.scl3.mozilla.com
 print "Contacting puppet server %s" % (puppet_server,)
 if not deploypass:
     deploypass = getpass.getpass('deploypass: ')
@@ -149,13 +149,13 @@ if $interactive; then
 fi
 
 run_puppet() {
-    puppet_server="${PUPPET_SERVER:-puppet}"
+    puppet_server=releng-puppet2.srv.releng.scl3.mozilla.com
     echo $"Running puppet agent against server '$puppet_server'"
     # this includes:
     # --pluginsync so that we download plugins on the first run, as they may be required
     # --ssldir=/var/lib/puppet/ssl because it defaults to /etc/puppet/ssl on OS X
     # FACTER_PUPPETIZING so that the manifests know this is a first run of puppet
-    PUPPET_OPTIONS="--onetime --no-daemonize --logdest=console --logdest=syslog --color=false --ssldir=/var/lib/puppet/ssl --pluginsync --detailed-exitcodes --server $puppet_server"
+    PUPPET_OPTIONS="--environment=jlund --onetime --no-daemonize --logdest=console --logdest=syslog --color=false --ssldir=/var/lib/puppet/ssl --pluginsync --detailed-exitcodes --server $puppet_server"
     export FACTER_PUPPETIZING=true
 
     # check for 'err:' in the output; this catches errors even
