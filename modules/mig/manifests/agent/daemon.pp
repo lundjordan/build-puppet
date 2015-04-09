@@ -7,14 +7,15 @@ class mig::agent::daemon {
         installservice => "on",
         discoverpublicip => "on",
         checkin => "off",
-        moduletimeout => "1200s"
+        moduletimeout => "1200s",
+        apiurl => "https://api.mig.mozilla.org/api/v1/"
     }
     # on package update, shutdown the old agent and start the new one
     # when the package is upgraded, exec a new instance of the agent
     exec {
         'restart mig':
             command => '/sbin/mig-agent -q=shutdown; /sbin/mig-agent',
-            subscribe => Package['mig-agent'],
+            subscribe => Class['packages::mozilla::mig_agent'],
             refreshonly => true
     }
 }
