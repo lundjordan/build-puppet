@@ -12,7 +12,7 @@ class packages::mozilla::git {
             Anchor['packages::mozilla::git::begin'] ->
             package {
                 "mozilla-git":
-                    ensure => '1.7.9.4-3.el6';
+                    ensure => '2.4.1-3.el6';
             } -> Anchor['packages::mozilla::git::end']
         }
         Darwin: {
@@ -23,7 +23,18 @@ class packages::mozilla::git {
             } -> Anchor['packages::mozilla::git::end']
         }
         Windows: {
-            #TODO: add windows support https://bugzilla.mozilla.org/show_bug.cgi?id=1113324
+            file {
+                "C:/installersource/puppetagain.pub.build.mozilla.org/EXEs/Git-1.9.2-preview20140411.exe":
+                    ensure  => file,
+                    source  => "puppet:///repos/EXEs/Git-1.9.2-preview20140411.exe",
+                    require => Class["dirs::installersource::puppetagain_pub_build_mozilla_org::exes"];
+            }
+            exec {
+                "Git-1.9.2-preview20140411.exe":
+                    command => "C:\\installersource\\puppetagain.pub.build.mozilla.org\\EXEs\\Git-1.9.2-preview20140411.exe /VERYSILENT /DIR=C:\\mozilla-build\\Git",
+                    creates => "C:\\mozilla-build\\git\\unins000.exe",
+                    require => File["C:/installersource/puppetagain.pub.build.mozilla.org/EXEs/Git-1.9.2-preview20140411.exe"],
+            }
         }
         default: {
             fail("cannot install on $::operatingsystem")

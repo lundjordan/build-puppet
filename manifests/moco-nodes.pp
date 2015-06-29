@@ -38,13 +38,12 @@ node /t-w732-ix-\d+.wintest.releng.scl3.mozilla.com/ {
 ## builders
 
 # Windows
-node /b-2008.*\.build\.releng\.(use1|usw2)\.mozilla.com/{
+node /b-2008.*\.(winbuild|build)\.releng\.(scl3|use1|usw2)\.mozilla.com/{
     $node_security_level = 'low'
-    $slave_trustlevel = 'try'
+    $slave_trustlevel = 'core'
     include toplevel::slave::releng::build
 }
     
-
 # linux64
 node /b-linux64-\w+-\d+.build.releng.scl3.mozilla.com/ {
     # any b-linux64-(something)-digit host in the scl3 build zone
@@ -58,8 +57,6 @@ node /bld-.*\.build\.releng\.(use1|usw2)\.mozilla.com/ {
     $node_security_level = 'low'
     $slave_trustlevel = 'core'
     include toplevel::slave::releng::build::mock
-    include diamond
-    include instance_metadata::diamond
 }
 
 # OS X
@@ -73,13 +70,7 @@ node /bld-lion-r5-\d+\.build\.releng\.scl3\.mozilla\.com/ {
 ## try builders
 
 # Windows
-node /b-2008-\w+-\d+.winbuild.releng.scl3.mozilla.com/ {
-    $slave_trustlevel = 'try'
-    $node_security_level = 'low'
-    include toplevel::slave::releng::build
-}
-
-node /b-2008.*\.(dev|try)\.releng\.(use1|usw2)\.mozilla.com/{
+node /(b|try)-2008-.*\.(try|wintry).releng.(use1|usw2|scl3).mozilla.com/ {
     $slave_trustlevel = 'try'
     $node_security_level = 'low'
     include toplevel::slave::releng::build
@@ -106,8 +97,6 @@ node /(dev|try)-.*\.(dev|try)\.releng\.(use1|usw2)\.mozilla.com/ {
     $node_security_level = 'low'
     $slave_trustlevel = 'try'
     include toplevel::slave::releng::build::mock
-    include diamond
-    include instance_metadata::diamond
 }
 
 # OS X
@@ -196,8 +185,6 @@ node /dev-linux64-ec2-001.dev.releng.use1.mozilla.com/ {
     $node_security_level = 'low'
     $slave_trustlevel = 'try'
     include toplevel::slave::releng::build::mock
-    include diamond
-    include instance_metadata::diamond
     users::root::extra_authorized_key {
         'sledru': ;
     }
@@ -441,6 +428,7 @@ node "buildbot-master70.bb.releng.use1.mozilla.com" {
     }
     include toplevel::server::buildmaster::mozilla
     include toplevel::mixin::selfserve_agent
+    include toplevel::mixin::buildbot_bridge
 }
 
 node "buildbot-master71.bb.releng.use1.mozilla.com" {
@@ -465,6 +453,7 @@ node "buildbot-master72.bb.releng.usw2.mozilla.com" {
     }
     include toplevel::server::buildmaster::mozilla
     include toplevel::mixin::selfserve_agent
+    include toplevel::mixin::buildbot_bridge
 }
 
 node "buildbot-master73.bb.releng.usw2.mozilla.com" {
@@ -574,6 +563,7 @@ node "buildbot-master82.bb.releng.scl3.mozilla.com" {
             basedir => "build1";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::buildbot_bridge
 }
 
 node "buildbot-master83.bb.releng.scl3.mozilla.com" {
@@ -640,6 +630,7 @@ node "buildbot-master89.bb.releng.scl3.mozilla.com" {
             basedir => "tests1-panda";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::funsize_scheduler
 }
 
 node "buildbot-master91.bb.releng.usw2.mozilla.com" {
@@ -651,6 +642,7 @@ node "buildbot-master91.bb.releng.usw2.mozilla.com" {
             basedir => "build1";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::funsize_scheduler
 }
 
 node "buildbot-master94.bb.releng.use1.mozilla.com" {
@@ -662,6 +654,7 @@ node "buildbot-master94.bb.releng.use1.mozilla.com" {
             basedir => "build1";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::funsize_scheduler
 }
 
 node "buildbot-master100.bb.releng.scl3.mozilla.com" {
@@ -933,17 +926,22 @@ node /log-aggregator\d+\.srv\.releng\.(scl3|use1|usw2)\.mozilla\.com/ {
     include toplevel::server::log_aggregator
 }
 
-## Loaners
-
-## temporary hosts Bug 1141628 and 1141626
-
-node "bld-lion-r4-001.build.releng.scl3.mozilla.com" {
-    $slave_trustlevel = 'core'
-    include toplevel::slave::releng::build::standard
+# Signing workers
+node /signingworker-.*\.srv\.releng\..*\.mozilla\.com/ {
+    include toplevel::server::signingworker
 }
 
-node "mac-v2-signing5.test.releng.scl3.mozilla.com" {
-    $node_security_level = 'maximum'
-    include toplevel::server::signing
+## Loaners
+
+## temporary host node Bug 1155690
+
+node "jwatkins-trusty-testing.srv.releng.use1.mozilla.com" {
+    $node_security_level = 'low'
+    include toplevel::server
+}
+
+node "dividehex-test.relabs.releng.scl3.mozilla.com" {
+    $node_security_level = 'low'
+    include toplevel::base
 }
 

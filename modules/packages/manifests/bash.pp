@@ -3,6 +3,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class packages::bash {
+
+    anchor {
+        'packages::bash::begin': ;
+        'packages::bash::end': ;
+    }
+
     case $::operatingsystem {
         CentOS: {
             case $::operatingsystemmajrelease {
@@ -45,6 +51,14 @@ class packages::bash {
                     fail("Unrecognized Ubuntu version $::operatingsystemrelease")
                 }
             }
+        }
+
+        Windows: {
+            # on Windows, we use the bash that ships with MozillaBuild
+            include packages::mozilla::mozilla_build
+            Anchor['packages::bash::begin'] ->
+            Class['packages::mozilla::mozilla_build']
+            -> Anchor['packages::bash::end']
         }
 
         default: {

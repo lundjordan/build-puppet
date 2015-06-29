@@ -186,6 +186,10 @@ class config::base {
     $install_google_oauth_api_key = false
     # true if secret("crash_stats_api_token") should be installed on build slaves
     $install_crash_stats_api_token = false
+    # true if secret("adjust_sdk_token") should be installed on build slaves
+    $install_adjust_sdk_token = false
+    # true if secret('slave_relengapi_token') should be installed on all slaves
+    $install_relengapi_token = false
 
     # signingserver
 
@@ -296,6 +300,8 @@ class config::base {
     # root directory for selfserve; this must be under /builds
     $selfserve_agent_root = "/builds/selfserve-agent"
 
+    $selfserve_private_url = ""
+
     # slaveapi
 
     # url for the slavealloc API (should end in '/api/')
@@ -363,4 +369,34 @@ class config::base {
     $bacula_director = '' # hostname of the director
     $bacula_fd_port = '' # port on the director
     $bacula_cacert = '' # full text of the CA cert signing the director's keys
+
+    # Buildbot <-> Taskcluster bridge configuration
+    $buildbot_bridge_pulse_queue_basename = ""
+    $buildbot_bridge_tclistener_pulse_exchange_basename = ""
+    $buildbot_bridge_worker_type = ""
+    $buildbot_bridge_provisioner_id = ""
+    $buildbot_bridge_bblistener_pulse_exchange = ""
+    $buildbot_bridge_worker_group = ""
+    $buildbot_bridge_worker_id = ""
+    $buildbot_bridge_reflector_interval = 60
+
+    # TC signing workers
+    $signingworker_tools_repo = "https://hg.mozilla.org/build/tools"
+    $signingworker_tools_branch = "default"
+    $signingworker_root = "/builds/signingworker"
+    $signingworker_pulse_host = "pulse.mozilla.org"
+    $signingworker_pulse_port = 5671
+    $signingworker_verbose_logging = "true"
+    $signingworker_exchange = ""
+    $signingworker_worker_type = ""
+
+    # Funsize Scheduler configuration
+    $funsize_scheduler_root = "/builds/funsize"
+    $funsize_scheduler_balrog_username = ""
+    $funsize_scheduler_pulse_username = ""
+    $funsize_scheduler_pulse_queue = ""
+    $funsize_scheduler_pulse_exchange = ""
+    $funsize_scheduler_s3_bucket = ""
+    $funsize_scheduler_balrog_worker_api_root = ""
+    $funsize_scheduler_th_api_root = ""
 }

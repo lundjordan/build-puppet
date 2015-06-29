@@ -24,12 +24,17 @@ class toplevel::slave::releng inherits toplevel::slave {
         include tweaks::pwrshell_options
         include tweaks::server_initialize
         include tweaks::shutdown_tracker
+        include tweaks::windows_network_opt_netsh
+        include tweaks::windows_network_opt_registry
         include packages::binscope
         include packages::psutil
         include packages::pywin32
         include packages::mapi_headers
         include fw::windows_exceptions
         include fw::windows_settings
+    }
+    if ($::operatingsystem == Darwin) {
+        include tweaks::disable_fseventsd
     }
     case $::kernel {
         'Linux': {

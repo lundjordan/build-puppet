@@ -16,18 +16,20 @@ class config inherits config::base {
     $install_mozilla_geoloc_api_keys = true
     $install_google_oauth_api_key = true
     $install_crash_stats_api_token = true
+    $install_adjust_sdk_token = true
+    $install_relengapi_token = true
 
     # we use the sort_servers_by_group function to sort the list of servers, and then just use
     # the first as the primary server
     $grouped_puppet_servers = {
-        ".*\.releng\.scl3\.mozilla\.com" => [
+        '.*\.releng\.scl3\.mozilla\.com' => [
            "releng-puppet1.srv.releng.scl3.mozilla.com",
            "releng-puppet2.srv.releng.scl3.mozilla.com",
         ],
-        ".*\.releng\.use1\.mozilla\.com" => [
+        '.*\.releng\.use1\.mozilla\.com' => [
            "releng-puppet1.srv.releng.use1.mozilla.com",
         ],
-        ".*\.releng\.usw2\.mozilla\.com" => [
+        '.*\.releng\.usw2\.mozilla\.com' => [
            "releng-puppet1.srv.releng.usw2.mozilla.com",
         ],
     }
@@ -80,7 +82,10 @@ class config inherits config::base {
     $default_security_level = 'medium'
 
     $nrpe_allowed_hosts = "127.0.0.1,10.26.75.30"
-    $ntp_servers = [ "ns1.private.releng.scl3.mozilla.com", "ns2.private.releng.scl3.mozilla.com" ]
+    $ntp_servers = [ "ns1.private.releng.scl3.mozilla.com",
+                     "ns2.private.releng.scl3.mozilla.com",
+                     "ns1.private.phx1.mozilla.com",
+                     "ns2.private.phx1.mozilla.com" ]
     $relayhost = "[smtp.mail.scl3.mozilla.com]"
 
     $enable_mig_agent = true
@@ -104,6 +109,8 @@ class config inherits config::base {
         "10.26.68.0/24",
         "10.132.68.0/24",
         "10.134.68.0/24",
+        "10.132.30.0/24",
+        "10.134.30.0/24",
     ]
     $signing_new_token_allowed_ips = [
         '10.134.68.32/32', # dev-master2
@@ -112,6 +119,8 @@ class config inherits config::base {
         "10.26.68.0/24",
         "10.132.68.0/24",
         "10.134.68.0/24",
+        "10.132.30.0/24",
+        "10.134.30.0/24",
     ]
 
     $extra_user_ssh_keys = {
@@ -135,7 +144,6 @@ class config inherits config::base {
         'coop',
         'jwood',
         'nthomas',
-        'pmoore',
         'raliiev',
     ]
     $admin_users = $fqdn ? {
@@ -156,7 +164,7 @@ class config inherits config::base {
     $releaserunner_smtp_server = "localhost"
     $releaserunner_hg_host = "hg.mozilla.org"
     $releaserunner_hg_username = "ffxbld"
-    $releaserunner_hg_ssh_key = "/home/cltbld/.ssh/ffxbld_dsa"
+    $releaserunner_hg_ssh_key = "/home/cltbld/.ssh/ffxbld_rsa"
     $releaserunner_production_masters = "https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"
     $releaserunner_sendchange_master = "buildbot-master81.build.mozilla.org:9301"
     $releaserunner_ssh_username = "cltbld"
@@ -183,6 +191,7 @@ class config inherits config::base {
     $selfserve_agent_carrot_userid = "buildapi"
     $selfserve_agent_carrot_exchange = "buildapi.control"
     $selfserve_agent_carrot_queue = "buildapi-agent-rabbit2"
+    $selfserve_private_url = "http://buildapi.pvt.build.mozilla.org/buildapi/self-serve"
 
     $distinguished_aws_manager = "aws-manager2.srv.releng.scl3.mozilla.com"
     $aws_manager_mail_to = "release+aws-manager@mozilla.com"
@@ -192,7 +201,7 @@ class config inherits config::base {
     $slaverebooter_slaveapi = "http://slaveapi1.srv.releng.scl3.mozilla.com:8080"
     $slaverebooter_mail_to = "release@mozilla.com"
 
-    $buildmaster_ssh_keys = [ 'b2gbld_dsa', 'b2gtry_dsa', 'ffxbld_rsa', 'ffxbld_dsa', 'tbirdbld_dsa', 'trybld_dsa', 'xrbld_dsa' ]
+    $buildmaster_ssh_keys = [ 'b2gbld_dsa', 'b2gtry_dsa', 'ffxbld_rsa', 'tbirdbld_dsa', 'trybld_dsa', 'xrbld_dsa' ]
 
     $collectd_write = {
         graphite_nodes => {
@@ -201,13 +210,6 @@ class config inherits config::base {
             },
         },
     }
-
-    # hosted graphite settings
-    $diamond_graphite_host = "mozilla.carbon.hostedgraphite.com"
-    $diamond_graphite_port = "2003"
-    $diamond_graphite_path_prefix = secret('diamond_api_key')
-    $diamond_batch_size = 1
-    $diamond_poll_interval = 30
 
     #### start configuration information for rsyslog logging
 
@@ -305,4 +307,29 @@ class config inherits config::base {
     $bacula_fd_port = 9102
     # this isn't actually secret, but it's long, so we stick it in hiera.
     $bacula_cacert = secret('bacula_ca_cert')
+
+    # Buildbot <-> Taskcluster bridge configuration
+    $buildbot_bridge_root = "/builds/bbb"
+    $buildbot_bridge_pulse_queue_basename = "queue/buildbot-bridge"
+    $buildbot_bridge_tclistener_pulse_exchange_basename = "exchange/taskcluster-queue/v1"
+    $buildbot_bridge_worker_type = "buildbot-bridge"
+    $buildbot_bridge_provisioner_id = "buildbot-bridge"
+    $buildbot_bridge_bblistener_pulse_exchange = "exchange/build"
+    $buildbot_bridge_worker_group = "buildbot-bridge"
+    $buildbot_bridge_worker_id = "buildbot-bridge"
+    $buildbot_bridge_reflector_interval = 60
+
+    # TC signing workers
+    $signingworker_exchange = "exchange/taskcluster-queue/v1/task-pending"
+    $signingworker_worker_type = "signing-worker-v1"
+
+    # Funsize Scheduler configuration
+    $funsize_scheduler_root = "/builds/funsize"
+    $funsize_scheduler_balrog_username = "funsize"
+    $funsize_scheduler_pulse_username = "funsize"
+    $funsize_scheduler_pulse_queue = "scheduler"
+    $funsize_scheduler_pulse_exchange = "exchange/build"
+    $funsize_scheduler_s3_bucket = "mozilla-nightly-updates"
+    $funsize_scheduler_balrog_worker_api_root = "http://balrog/api"
+    $funsize_scheduler_th_api_root = "https://treeherder.mozilla.org/api"
 }

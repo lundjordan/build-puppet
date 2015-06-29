@@ -1,0 +1,15 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Managed by puppet
+
+define ROOT <%= scope.lookupvar('nxlog::settings::root_dir') %>
+ 
+Moduledir %ROOT%\modules
+CacheDir  %ROOT%\data
+Pidfile %ROOT%\data\nxlog.pid
+SpoolDir  %ROOT%\data
+LogFile %ROOT%\data\nxlog.log
+
+include <%= scope.lookupvar('nxlog::settings::conf_include') %>
