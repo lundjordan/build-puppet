@@ -538,6 +538,7 @@ node "buildbot-master79.bb.releng.usw2.mozilla.com" {
 
 node "buildbot-master81.bb.releng.scl3.mozilla.com" {
     $node_security_level = 'high'
+    $releaserunner_env = "prod"
     buildmaster::buildbot_master::mozilla {
         "bm81-build_scheduler":
             master_type => "scheduler",
@@ -568,6 +569,7 @@ node "buildbot-master82.bb.releng.scl3.mozilla.com" {
 
 node "buildbot-master83.bb.releng.scl3.mozilla.com" {
     $node_security_level = 'high'
+    $releaserunner_env = "dev"
     buildmaster::buildbot_master::mozilla {
         "bm83-try1":
             http_port => 8101,
@@ -575,6 +577,7 @@ node "buildbot-master83.bb.releng.scl3.mozilla.com" {
             basedir => "try1";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::releaserunner
 }
 
 node "buildbot-master84.bb.releng.scl3.mozilla.com" {
