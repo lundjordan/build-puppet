@@ -948,3 +948,10 @@ node "dividehex-test.relabs.releng.scl3.mozilla.com" {
     include toplevel::base
 }
 
+node "dev-linux64-ec2-012.dev.releng.use1.mozilla.com" {
+    # the pins must come *before* the toplevel include
+    $pin_puppet_server = "releng-puppet2.srv.releng.scl3.mozilla.com"
+    $pin_puppet_env = "jlund"
+    include toplevel::slave::build
+}
+

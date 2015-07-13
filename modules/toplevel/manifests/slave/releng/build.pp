@@ -56,10 +56,10 @@ class toplevel::slave::releng::build inherits toplevel::slave::releng {
         include runner::tasks::clobber
         include runner::tasks::update_shared_repos
         include runner::tasks::cleanup
-        class {
-            'runner::tasks::purge_builds':
-                required_space => 20;
-        }
+#        class {
+#            'runner::tasks::purge_builds':
+#                required_space => 20;
+#        }
     }
 
     class {
