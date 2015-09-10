@@ -43,7 +43,7 @@ node /b-2008.*\.(winbuild|build)\.releng\.(scl3|use1|usw2)\.mozilla.com/{
     $slave_trustlevel = 'core'
     include toplevel::slave::releng::build
 }
-    
+
 # linux64
 node /b-linux64-\w+-\d+.build.releng.scl3.mozilla.com/ {
     # any b-linux64-(something)-digit host in the scl3 build zone
@@ -59,6 +59,12 @@ node /bld-.*\.build\.releng\.(use1|usw2)\.mozilla.com/ {
     include toplevel::slave::releng::build::mock
 }
 
+node /av-linux64.*\.build\.releng\.(use1|usw2)\.mozilla\.com/ {
+    $node_security_level = 'low'
+    $slave_trustlevel = 'core'
+    include toplevel::slave::releng::build::mock::av
+}
+
 # OS X
 node /bld-lion-r5-\d+\.build\.releng\.scl3\.mozilla\.com/ {
     # any bld-lion-r5-(digit) hosts in the scl3 build zone
@@ -70,7 +76,7 @@ node /bld-lion-r5-\d+\.build\.releng\.scl3\.mozilla\.com/ {
 ## try builders
 
 # Windows
-node /(b|try)-2008-.*\.(try|wintry).releng.(use1|usw2|scl3).mozilla.com/ {
+node /(b|y|try)-2008-.*\.(try|wintry).releng.(use1|usw2|scl3).mozilla.com/ {
     $slave_trustlevel = 'try'
     $node_security_level = 'low'
     include toplevel::slave::releng::build
@@ -434,6 +440,7 @@ node "buildbot-master69.bb.releng.use1.mozilla.com" {
 
 node "buildbot-master70.bb.releng.use1.mozilla.com" {
     $node_security_level = 'high'
+    $buildbot_bridge_env = "prod"
     buildmaster::buildbot_master::mozilla {
         "bm70-build1":
             http_port => 8001,
@@ -459,6 +466,7 @@ node "buildbot-master71.bb.releng.use1.mozilla.com" {
 
 node "buildbot-master72.bb.releng.usw2.mozilla.com" {
     $node_security_level = 'high'
+    $buildbot_bridge_env = "prod"
     buildmaster::buildbot_master::mozilla {
         "bm72-build1":
             http_port => 8001,
@@ -571,6 +579,7 @@ node "buildbot-master81.bb.releng.scl3.mozilla.com" {
 
 node "buildbot-master82.bb.releng.scl3.mozilla.com" {
     $node_security_level = 'high'
+    $buildbot_bridge_env = "prod"
     buildmaster::buildbot_master::mozilla {
         "bm82-build1":
             http_port => 8001,
@@ -596,6 +605,7 @@ node "buildbot-master83.bb.releng.scl3.mozilla.com" {
 
 node "buildbot-master84.bb.releng.scl3.mozilla.com" {
     $node_security_level = 'high'
+    $buildbot_bridge_env = "dev"
     buildmaster::buildbot_master::mozilla {
         "bm84-build1":
             http_port => 8001,
@@ -603,6 +613,7 @@ node "buildbot-master84.bb.releng.scl3.mozilla.com" {
             basedir => "build1";
     }
     include toplevel::server::buildmaster::mozilla
+    include toplevel::mixin::buildbot_bridge
 }
 
 node "buildbot-master85.bb.releng.scl3.mozilla.com" {
@@ -949,16 +960,4 @@ node /signingworker-.*\.srv\.releng\..*\.mozilla\.com/ {
 }
 
 ## Loaners
-
-## temporary host node Bug 1155690
-
-node "jwatkins-trusty-testing.srv.releng.use1.mozilla.com" {
-    $node_security_level = 'low'
-    include toplevel::server
-}
-
-node "dividehex-test.relabs.releng.scl3.mozilla.com" {
-    $node_security_level = 'low'
-    include toplevel::base
-}
 

@@ -9,6 +9,8 @@ class buildbot_bridge {
     include packages::mysql_devel
     include users::builder
 
+    $bbb_version = $::buildbot_bridge::settings::env_config["version"]
+
     python::virtualenv {
         "${buildbot_bridge::settings::root}":
             python   => "${packages::mozilla::python27::python}",
@@ -32,7 +34,10 @@ class buildbot_bridge {
                 "wsgiref==0.1.2",
                 "PyHawk-with-a-single-extra-commit==0.1.5",
                 "anyjson==0.3.3",
-                "bbb==1.0",
+                "PyYAML==3.10",
+                "jsonschema==2.4.0",
+                "slugid==1.0.6",
+                "bbb==${bbb_version}",
            ];
     }
 }
