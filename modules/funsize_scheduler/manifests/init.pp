@@ -26,10 +26,11 @@ class funsize_scheduler {
                 # PGPy depends on this _specific_ version of cryptography
                 "cryptography==0.6",
                 "enum34==1.0.4",
-                "funsize==0.26",
+                "funsize==0.43",
                 "Jinja2==2.7.1",
                 "kombu==3.0.26",
                 "MarkupSafe==0.23",
+                "more_itertools==2.2",
                 "PGPy==0.3.0",
                 "pycparser==2.13",
                 "PyHawk-with-a-single-extra-commit==0.1.5",
@@ -40,7 +41,8 @@ class funsize_scheduler {
                 "requests==2.4.3",
                 "singledispatch==3.4.0.3",
                 "six==1.9.0",
-                "taskcluster==0.0.16",
+                "slugid==1.0.6",
+                "taskcluster==0.0.26",
                 "wsgiref==0.1.2",
            ];
     }

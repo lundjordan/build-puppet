@@ -4,11 +4,34 @@
 # a task to be run by runner
 define runner::task($content=undef, $source=undef) {
     include runner::settings
+
+    $runner_service = $operatingsystem ? {
+        Windows => Exec['startrunner'],
+        default => Service['runner'],
+    }
+     $mode  = $operatingsystem ? {
+        Windows => undef,
+        default => '0755',
+    }
+
     file {
         "${runner::settings::taskdir}/${title}":
-            before  => Service['runner'],
+            before  => $runner_service,
             content => $content,
             source  => $source,
-            mode    => '0755';
+            mode    => $mode;
+    }
+    if ($::operatingsystem == Windows) {
+        acl {
+            "${runner::settings::taskdir}/${title}":
+                purge => true,
+                inherit_parent_permissions => false,
+                permissions => [
+                    { identity => 'root', rights => ['full'] },
+                    { identity => 'cltbld', rights => ['full'] },
+                    { identity => 'SYSTEM', rights => ['full'] },
+                    { identity => 'EVERYONE', rights => ['read'] },
+                ];
+        }
     }
 }
