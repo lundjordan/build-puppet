@@ -18,6 +18,7 @@ class config inherits config::base {
     $install_crash_stats_api_token = true
     $install_adjust_sdk_token = true
     $install_relengapi_token = true
+    $install_release_s3_credentials = true
 
     # we use the sort_servers_by_group function to sort the list of servers, and then just use
     # the first as the primary server
@@ -177,6 +178,10 @@ class config inherits config::base {
             allowed_branches => "date",
             taskcluster_client_id => secret("releaserunner_dev_taskcluster_client_id"),
             taskcluster_access_token => secret("releaserunner_dev_taskcluster_access_token"),
+            balrog_username => "stage-ffxbld",
+            balrog_password => secret("stage-ffxbld_ldap_password"),
+            releaserunner_buildbot_configs_branch => "default",
+            releaserunner_buildbot_configs => "https://hg.mozilla.org/build/buildbot-configs",
         },
         "prod" => {
             ship_it_root => "https://ship-it.mozilla.org",
@@ -186,6 +191,10 @@ class config inherits config::base {
             allowed_branches => "mozilla-beta,mozilla-release,mozilla-esr,comm-beta,comm-esr",
             taskcluster_client_id => secret("releaserunner_prod_taskcluster_client_id"),
             taskcluster_access_token => secret("releaserunner_prod_taskcluster_access_token"),
+            balrog_username => "ffxbld",
+            balrog_password => secret("ffxbld_ldap_password"),
+            releaserunner_buildbot_configs_branch => "production",
+            releaserunner_buildbot_configs => "https://hg.mozilla.org/build/buildbot-configs",
         }
     }
 
@@ -340,26 +349,43 @@ class config inherits config::base {
 
     $buildbot_bridge_env_config = {
         "dev" => {
-            version => "1.4.2",
+            version => "1.5.1",
             client_id => secret("buildbot_bridge_dev_taskcluster_client_id"),
             access_token => secret("buildbot_bridge_dev_taskcluster_access_token"),
             dburi => secret("buildbot_bridge_dev_dburi"),
             pulse_username => secret("buildbot_bridge_dev_pulse_username"),
             pulse_password => secret("buildbot_bridge_dev_pulse_password"),
             pulse_queue_basename => "queue/buildbot-bridge-dev",
-            allowed_builders => "^.*$",
-            ignored_builders => "^((?!alder).)*$",
+            # TODO: remove allowed builders after bug 1196407 lands
+            allowed_builders => [
+                "^.*$",
+            ],
+            restricted_builders => [
+                "^release-.*$",
+            ],
+            ignored_builders => [
+                "^((?!(alder|date)).)*$",
+            ],
         },
         "prod" => {
-            version => "1.4.2",
+            version => "1.5.1",
             client_id => secret("buildbot_bridge_prod_taskcluster_client_id"),
             access_token => secret("buildbot_bridge_prod_taskcluster_access_token"),
             dburi => secret("buildbot_bridge_prod_dburi"),
             pulse_username => secret("buildbot_bridge_prod_pulse_username"),
             pulse_password => secret("buildbot_bridge_prod_pulse_password"),
             pulse_queue_basename => "queue/buildbot-bridge",
-            allowed_builders => "^.*$",
-            ignored_builders => "^.*alder.*$",
+            allowed_builders => [
+                "^.*$",
+            ],
+            restricted_builders => [
+                "^release-.*$",
+            ],
+            ignored_builders => [
+                "^.*alder.*$",
+                "^.*date.*$",
+                "^release-.*$",
+            ],
         }
     }
 

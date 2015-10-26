@@ -190,6 +190,8 @@ class config::base {
     $install_adjust_sdk_token = false
     # true if secret('slave_relengapi_token') should be installed on all slaves
     $install_relengapi_token = false
+    # true if secret('release_s3_credentials') should be installed on build slaves
+    $install_release_s3_credentials = false
 
     # signingserver
 
@@ -241,9 +243,6 @@ class config::base {
     $releaserunner_ssh_username = ""
     # URL for masters.json, defaulting to $master_json from above
     $releaserunner_production_masters = $master_json
-    # mercurial repository and branch for buildbot-configs
-    $releaserunner_buildbot_configs_branch = "production"
-    $releaserunner_buildbot_configs = "https://hg.mozilla.org/build/buildbot-configs"
     # mercurial repository and branch for buildbotcustom
     $releaserunner_buildbotcustom_branch = "production-0.8"
     $releaserunner_buildbotcustom = "https://hg.mozilla.org/build/buildbotcustom"
@@ -391,7 +390,7 @@ class config::base {
     $bacula_cacert = '' # full text of the CA cert signing the director's keys
 
     # Buildbot <-> Taskcluster bridge configuration
-    $buildbot_bridge_pulse_queue_basename = ""
+    $buildbot_bridge_root = ""
     $buildbot_bridge_tclistener_pulse_exchange_basename = ""
     $buildbot_bridge_worker_type = ""
     $buildbot_bridge_provisioner_id = ""
@@ -399,6 +398,46 @@ class config::base {
     $buildbot_bridge_worker_group = ""
     $buildbot_bridge_worker_id = ""
     $buildbot_bridge_reflector_interval = 60
+
+    $buildbot_bridge_env_config = {
+        "dev" => {
+            version => "",
+            client_id => "",
+            access_token => "",
+            dburi => "",
+            pulse_username => "",
+            pulse_password => "",
+            pulse_queue_basename => "",
+            # TODO: remove allowed builders after bug 1196407 lands
+            allowed_builders => [
+                "",
+            ],
+            restricted_builders => [
+                "",
+            ],
+            ignored_builders => [
+                "",
+            ],
+        },
+        "prod" => {
+            version => "",
+            client_id => "",
+            access_token => "",
+            dburi => "",
+            pulse_username => "",
+            pulse_password => "",
+            pulse_queue_basename => "",
+            allowed_builders => [
+                "",
+            ],
+            restricted_builders => [
+                "",
+            ],
+            ignored_builders => [
+                "",
+            ],
+        }
+    }
 
     # TC signing workers
     $signingworker_tools_repo = "https://hg.mozilla.org/build/tools"

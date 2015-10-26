@@ -16,6 +16,7 @@
 #
 define buildmaster::buildbot_master::mozilla($basedir, $master_type, $http_port=undef) {
     include ::config
+    include buildmaster::base
 
     $master_group = "${users::builder::group}"
     $master_user = "${users::builder::username}"
@@ -76,7 +77,16 @@ define buildmaster::buildbot_master::mozilla($basedir, $master_type, $http_port=
                 mode => 600,
                 content => template("buildmaster/${buildmaster::settings::postrun_template}"),
                 show_diff => false;
+            "/usr/local/bin/buildmaster-retry_dead_queue.sh":
+                mode => 0755,
+                require => Exec["setup-${basedir}"],
+                source => "puppet:///modules/buildmaster/buildmaster-retry_dead_queue.sh";
+            "/etc/cron.d/buildmaster-retry_dead_queue":
+                mode    => 644,
+                require => Exec["setup-${basedir}"],
+                content => template("buildmaster/buildmaster-retry_dead_queue.erb");    	
         }
+        
     }
 
     mercurial::repo {
