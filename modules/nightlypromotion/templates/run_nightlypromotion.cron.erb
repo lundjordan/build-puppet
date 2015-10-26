@@ -1,0 +1,2 @@
+# This file is managed by puppet
+0 10 * * *	<%=@nightlypromotion_user%>		<%=scope.lookupvar('nightlypromotion::settings::script')%> <%=scope.lookupvar('nightlypromotion::settings::logfile')%> <%=scope.lookupvar('nightlypromotion::settings::cachefile')%> <%=scope.lookupvar('nightlypromotion::settings::authfile')%>
