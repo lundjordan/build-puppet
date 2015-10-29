@@ -10,4 +10,5 @@ class nightlypromotion::settings {
     $logfile = "${root}/nightly-promotion.log"
     $cachefile = "${root}/cache.json"
     $authfile = "${buildmaster::settings::master_root}/build1/master/BuildSlaves.py"
+    $cacert = "${buildmaster::settings::master_root}/build1/tools/misc/certs/ca-bundle.crt"
 }

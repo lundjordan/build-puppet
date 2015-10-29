@@ -46,56 +46,56 @@ def sha512sum(filename):
         return h.hexdigest()
 
 
-def get_mar_info(filename):
-    complete_info = {'from': '*'}
+def get_info_from_ini(ini_path, archive_path, archive):
+    """
+    extracts and returns info from an ini file
+    :param ini_path: path to ini
+    :param archive_path: path to archive (e.g. apk or mar archive)
+    :param archive: the archive object itself
+    :return: dict containing platformVersion, appVersion, displayVersion, buildID, and completes
+    """
+    # Extract it!
+    complete_info = {
+        'from': '*',
+        'hashValue': sha512sum(archive_path),
+        'filesize': os.path.getsize(archive_path),
+    }
     retval = {'completes': [complete_info]}
-    complete_info['hashValue'] = sha512sum(filename)
-    complete_info['filesize'] = os.path.getsize(filename)
-    mar = BZ2MarFile(filename)
+    tmpdir = tempfile.mkdtemp()
+
+    try:
+        ini = archive.extract(ini_path, tmpdir)
+        conf = configparser.RawConfigParser()
+        conf.read([ini])
+        if ini_path.filename == 'platform.ini':
+            retval['platformVersion'] = conf.get('Build', 'Milestone')
+        else:
+            retval['appVersion'] = conf.get('App', 'Version')
+            retval['displayVersion'] = conf.get('App', 'Version')
+            retval['buildID'] = conf.get('App', 'BuildID')
+    finally:
+        shutil.rmtree(tmpdir)
+    return retval
+
+
+def get_mar_info(archive_path):
+    mar = BZ2MarFile(archive_path)
+    retval = {}
 
     for m in mar.members:
         if m.name.endswith("platform.ini") or m.name.endswith("application.ini"):
-            # Extract it!
-            tmpdir = tempfile.mkdtemp()
-            try:
-                ini = mar.extract(m, tmpdir)
-                conf = configparser.RawConfigParser()
-                conf.read([ini])
-                if m.name == 'platform.ini':
-                    retval['platformVersion'] = conf.get('Build', 'Milestone')
-                else:
-                    retval['appVersion'] = conf.get('App', 'Version')
-                    retval['displayVersion'] = conf.get('App', 'Version')
-                    retval['buildID'] = conf.get('App', 'BuildID')
-            finally:
-                shutil.rmtree(tmpdir)
+            retval.update(get_info_from_ini(m, archive_path, mar))
 
     return retval
 
 
-def get_apk_info(filename):
-    complete_info = {'from': '*'}
-    retval = {'completes': [complete_info]}
-    complete_info['hashValue'] = sha512sum(filename)
-    complete_info['filesize'] = os.path.getsize(filename)
-    apk = ZipFile(filename)
+def get_apk_info(archive_path):
+    apk = ZipFile(archive_path)
+    retval = {}
 
     for z in apk.infolist():
         if z.filename.endswith("platform.ini") or z.filename.endswith("application.ini"):
-            # Extract it!
-            tmpdir = tempfile.mkdtemp()
-            try:
-                ini = apk.extract(z, tmpdir)
-                conf = configparser.RawConfigParser()
-                conf.read([ini])
-                if z.filename == 'platform.ini':
-                    retval['platformVersion'] = conf.get('Build', 'Milestone')
-                else:
-                    retval['appVersion'] = conf.get('App', 'Version')
-                    retval['displayVersion'] = conf.get('App', 'Version')
-                    retval['buildID'] = conf.get('App', 'BuildID')
-            finally:
-                shutil.rmtree(tmpdir)
+            retval.update(get_info_from_ini(z, archive_path, apk))
 
     return retval
 
@@ -136,7 +136,6 @@ class Balrog:
         if self.auth:
             return self.auth
 
-        auth_file = auth_file or 'credentials.py'
         if not os.path.exists(auth_file):
             log.error(
                 'Could not determine path to balrog credentials. Does "{}" exist?'.format(auth_file)
@@ -147,7 +146,9 @@ class Balrog:
         self.auth = (username, credentials['balrog_credentials'][username])
         return self.auth
 
-    def update_release(self, product, schema_version, api, info, balrog_username, auth_file):
+    def update_release(self, product, schema_version, api, info,
+                       balrog_username, auth_file, ca_cert):
+        # needed to preserve cookie so csrf works
         session = requests.session()
 
         data = {
@@ -159,7 +160,7 @@ class Balrog:
         data['data'] = json.dumps(info)
 
         # Get the old release - we need the old data_version and csrf token
-        resp = session.head(api, auth=self.get_auth(balrog_username, args.auth_file))
+        resp = session.head(api, auth=self.get_auth(balrog_username, auth_file), verify=ca_cert)
         if resp.status_code == 200:
             log.info('previous release found; updating')
             data['data_version'] = resp.headers['X-Data-Version']
@@ -168,13 +169,14 @@ class Balrog:
             log.info('previous release not found; creating a new one')
             # Get a new csrf token
             resp = session.head("{}/csrf_token".format(BALROG_API_ROOT),
-                                auth=self.get_auth(balrog_username, args.auth_file))
+                                auth=self.get_auth(balrog_username, auth_file), verify=ca_cert)
             resp.raise_for_status()
             data['csrf_token'] = resp.headers['X-CSRF-Token']
         else:
             resp.raise_for_status()
 
-        resp = session.put(api, auth=self.get_auth(balrog_username, args.auth_file), data=data)
+        resp = session.put(api, auth=self.get_auth(balrog_username, auth_file),
+                           data=data, verify=ca_cert)
         resp.raise_for_status()
 
 
@@ -195,8 +197,8 @@ def save_cache(cache, filename=None):
 
 
 def main(args):
-    log_file = args.log_file or 'nightly_promotion.log'
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s", filename=log_file)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s",
+                        filename=args.log_file)
     balrog = Balrog()
     index = TCIndex()
 
@@ -206,7 +208,11 @@ def main(args):
 
     for c in CONFIGS:
         log.info('finding latest %s %s', c['namespace'], c['artifact'])
-        url = index.get_artifact_url(c['namespace'], c['artifact'])
+        try:
+            url = index.get_artifact_url(c['namespace'], c['artifact'])
+        except Exception:
+            log.exception('could not download latest complete artifact')
+            raise
         log.info('got url: %s', url)
         cache_key = '{c[namespace]}:{c[artifact]}'.format(c=c)
         if cache.get(cache_key) == url:
@@ -222,18 +228,28 @@ def main(args):
             api = '{}/releases/{}-{}-nightly-{}/builds/{}/{}'.format(
                 BALROG_API_ROOT, c['product'], c['branch'], blob, c['platform'], c['locale']
             )
-            balrog.update_release(c['product'], c['schema_version'], api, info,
-                                  c['balrog_username'], args.auth_file)
+            try:
+                balrog.update_release(c['product'], c['schema_version'], api, info,
+                                      c['balrog_username'], args.auth_file, args.ca_cert)
+            except Exception:
+                log.exception('could not submit release blob to: {}'.format(api))
+                raise
 
     log.info('saving cache')
     log.debug('cache: %s', cache)
     save_cache(cache, args.cache_file)
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Process some integers.')
-    parser.add_argument('log_file', help='path of log file')
-    parser.add_argument('cache_file', help='path of cache file ')
-    parser.add_argument('auth_file', help='path of auth file ')
+    parser = ArgumentParser(description='Looks for latest completed continuous integration '
+                                        'build from a product and promotes it to a nightly by '
+                                        'submitting build info to update server, Balrog')
+    parser.add_argument('auth_file', help='path to update server credentials')
+    parser.add_argument('ca_cert', help='path to ca_cert')
+    parser.add_argument('--log-file', help='path of log file', default='nightly-promotion.log')
+    parser.add_argument('--cache-file', help='path to cache of most recently promoted '
+                                             'continuous integration taskcluster job',
+                        default='cache.json')
     args = parser.parse_args()
+
     main(args)
 
