@@ -693,6 +693,7 @@ node "buildbot-master91.bb.releng.usw2.mozilla.com" {
     }
     include toplevel::server::buildmaster::mozilla
     include toplevel::mixin::funsize_scheduler
+    include toplevel::mixin::nightlypromotion
 }
 
 node "buildbot-master94.bb.releng.use1.mozilla.com" {
@@ -989,6 +990,28 @@ node "buildbot-master125.bb.releng.usw2.mozilla.com" {
             http_port => 8201,
             master_type => "tests",
             basedir => "tests1-linux64";
+    }
+    include toplevel::server::buildmaster::mozilla
+}
+
+node "buildbot-master126.bb.releng.scl3.mozilla.com" {
+    $node_security_level = 'high'
+    buildmaster::buildbot_master::mozilla {
+        "bm126-tests1-windows":
+            http_port => 8201,
+            master_type => "tests",
+            basedir => "tests1-windows";
+    }
+    include toplevel::server::buildmaster::mozilla
+}
+
+node "buildbot-master127.bb.releng.scl3.mozilla.com" {
+    $node_security_level = 'high'
+    buildmaster::buildbot_master::mozilla {
+        "bm127-tests1-windows":
+            http_port => 8201,
+            master_type => "tests",
+            basedir => "tests1-windows";
     }
     include toplevel::server::buildmaster::mozilla
 }
