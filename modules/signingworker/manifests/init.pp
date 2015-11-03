@@ -6,11 +6,17 @@ class signingworker {
     include packages::mozilla::python27
     include users::builder
     include tweaks::swap_on_instance_storage
+    include packages::gcc
+    include packages::make
+    include packages::libffi
 
     python::virtualenv {
         "${signingworker::settings::root}":
             python   => "${packages::mozilla::python27::python}",
-            require  => Class["packages::mozilla::python27"],
+            require  => [
+                Class["packages::mozilla::python27"],
+                Class["packages::libffi"],
+            ],
             user     => "${users::builder::username}",
             group    => "${users::builder::group}",
             packages => [
@@ -21,16 +27,24 @@ class signingworker {
                  "arrow==0.5.4",
                  "configman==1.2.13",
                  "configobj==5.0.6",
+                 "ecdsa==0.10",
                  "jsonschema==2.4.0",
                  "kombu==3.0.26",
+                 "pycrypto==2.6.1",
                  "python-dateutil==2.4.2",
+                 "python-jose==0.5.2",
                  "redo==1.4.1",
                  "requests==2.4.3",
                  "sh==1.11",
+                 "signingworker==0.9balrog1",
                  "six==1.9.0",
                  "taskcluster==0.0.16",
                  "wsgiref==0.1.2",
-                 "signingworker==0.8"
+                 "cffi==1.3.0",
+                 "cryptography==0.6",
+                 "mar==1.2",
+                 "boto==2.27.0",
+                 "pycparser==2.13",
            ];
     }
 
@@ -63,5 +77,8 @@ class signingworker {
             group       => "${users::builder::group}",
             content     => template("${module_name}/passwords.json.erb"),
             show_diff => false;
+        "${signingworker::settings::root}/id_rsa.pub":
+            require     => Python::Virtualenv["${signingworker::settings::root}"],
+            content     => secret("signingworker_pub_key");
     }
 }
