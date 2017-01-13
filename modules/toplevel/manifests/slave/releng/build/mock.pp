@@ -30,7 +30,7 @@ class toplevel::slave::releng::build::mock inherits toplevel::slave::releng::bui
     case $::kernel {
         'Linux': {
             include runner::tasks::populate_shared_repos
-            include runner::tasks::check_ami
+#            include runner::tasks::check_ami
         }
     }
 }
